@@ -11,6 +11,7 @@ const Records = preload("res://scripts/records.gd")
 const Narration = preload("res://scripts/narration.gd")
 const GameClock = preload("res://scripts/game_clock.gd")
 const Civil = preload("res://scripts/civil_time.gd")
+const PortableMath = preload("res://scripts/portable_math.gd")
 
 var data
 var resolver
@@ -191,7 +192,7 @@ func _gauss(rng: RandomNumberGenerator) -> float:
 	var u2 := rng.randf()
 	if u1 < 0.0000001:
 		u1 = 0.0000001
-	return sqrt(-2.0 * log(u1)) * cos(TAU * u2)
+	return sqrt(-2.0 * PortableMath.ln(u1)) * PortableMath.cos(TAU * u2)
 
 
 func _clamp_stat(v: float) -> float:
@@ -1101,7 +1102,7 @@ func _run_literals() -> Dictionary:
 				var is_float: bool = raw.contains(".") or raw.contains("e") or raw.contains("E")
 				if abs(val) < 0.000000001 or abs(val - 1.0) < 0.000000001 or abs(val + 1.0) < 0.000000001:
 					continue
-				if fn == "civil_time.gd" and not is_float:
+				if fn == "civil_time.gd" or fn == "portable_math.gd":
 					continue
 				if fn == "narration.gd" and not is_float and abs(val - 4.0) < 0.000000001:
 					fours += 1

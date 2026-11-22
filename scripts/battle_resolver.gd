@@ -7,6 +7,7 @@ extends RefCounted
 const HashUtil = preload("res://scripts/hash_util.gd")
 const Narration = preload("res://scripts/narration.gd")
 const Records = preload("res://scripts/records.gd")
+const PortableMath = preload("res://scripts/portable_math.gd")
 
 var _d
 var log_on = false
@@ -187,7 +188,7 @@ func _draw_gumbels(rng: RandomNumberGenerator) -> PackedFloat64Array:
 			u = _d.tiny
 		if u > 1.0 - _d.tiny:
 			u = 1.0 - _d.tiny
-		g[i] = -log(-log(u))
+		g[i] = -PortableMath.ln(-PortableMath.ln(u))
 	return g
 
 
@@ -489,7 +490,7 @@ func _softmax(comp: PackedFloat64Array, tfit: PackedFloat64Array) -> PackedFloat
 	ex.resize(n)
 	var z = 0.0
 	for i in n:
-		var e = exp((comp[i] + tfit[i] - mx) / _d.ai_temperature)
+		var e = PortableMath.exp((comp[i] + tfit[i] - mx) / _d.ai_temperature)
 		ex[i] = e
 		z += e
 	if z <= 0.0:
