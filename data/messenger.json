@@ -1,6 +1,6 @@
 {
   "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
-  "version": "1.3",
+  "version": "1.4",
   "status": "D1 DECIDED 2026-11-22 (captain): live click during first viewing + optional standing order",
   "per_battle": 1,
   "delay_ticks": 1,

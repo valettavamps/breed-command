@@ -1,6 +1,6 @@
 {
   "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
-  "version": "1.3",
+  "version": "1.4",
   "id_policy": "ids (dictionary keys and every 'id' value) are stable and never renamed; 'name' is the display string and may change between versions; 'legacy_names' lists earlier display strings so saves, logs and text can be matched. Code must key on ids, never on names.",
   "units": {
     "infantry": {

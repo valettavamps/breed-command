@@ -1,6 +1,6 @@
 # Line of Command
 
-Single-player Godot 4 battle kernel for Milestone 1. Balance numbers live only in `data/*.json` (spec v1.3, data version 1.3). Code keys on ids (`tight_wedge`, `cannon`), never on display names.
+Single-player Godot 4 battle kernel for Milestone 1. Balance numbers live only in `data/*.json` (spec v1.4, data version 1.4). Code keys on ids (`tight_wedge`, `cannon`), never on display names.
 
 ## Engine
 
@@ -14,7 +14,9 @@ godot --headless --path . --quit-after 1 --script res://tools/balance_sim.gd -- 
 
 Output is `sim_out/<suite>.json`. Each check carries `fixture_id` = `<check id>@20261122@<git SHA>`, plus the measured value, the band, `pass`, and the sha256 of every file in `data/`.
 
-`--suite` also accepts a single check id (`B2`, `S6`, `E7`, `LITERALS`) or `all`. `--trial N` is accepted by the flag parser for later replay. `--scope-id`, `--clock`, `--local-clock`, and `--net-state` are parsed in `scripts/launch_flags.gd`. M1 does not gate them on a QA build flag; that gate belongs in the same parser later. Public builds must ignore those four flags unless the QA build flag is set.
+`--suite` accepts `ac1`, `ac2`, `ac6`, `CLK`, `all`, or any implemented check id (`B5`, `B14`, `B15`, `S6`, `E7`, `LITERALS`, and the rest of the battle checks in this tree). `--trial N` runs that trial index only. `--out` writes the suite file (a directory ending in `/` gets `<suite>.json` inside it).
+
+`--scope-id`, `--clock`, `--local-clock`, and `--net-state` are parsed in `scripts/launch_flags.gd` and applied to `GameClock`. AC-8-PUBLIC-FLAGS-IGNORED (a public build ignores those four unless a QA-build flag is set) stays deferred to M4. M1 does not gate them.
 
 ## What is in the tree
 
@@ -29,7 +31,7 @@ There is no networking code. A future Steamworks addon, if added, belongs under 
 
 ## Checks
 
-`ac1`: B1, B17, B18, S6, E6, E7, and `LITERALS` (no balance literal in `scripts/`).
+`ac1`: B1, B17, B18, S6, E6, E7, and `LITERALS` (no balance literal in `scripts/` or `tools/`). Officer draws and QA bands are read from sim-plan and the JSON tables.
 
 `ac2`: B2, B2b, B2c, B3, B3b, B4, B4b, B4c, B5, B6, B7, B9, B10, B11, B12, B13, B14, B15, B16, B23.
 
@@ -49,28 +51,24 @@ Where the spec is silent, the Python prototype in the spec folder (not copied in
 
 - Formation noise is always drawn, four uniforms per side in JSON key order (Line, Column, Pincer, Screen), even when a formation is forced. The prototype skipped those draws. The spec lists them first in the draw order.
 - Each tick always draws damage variance and temperament noise for A then B. Noise is applied only when that side took casualties.
-- Gumbel `u` is clamped away from 0 and 1. The prototype used `1e-12`. This build uses `2^-20`.
 - Round-half-away-from-zero for positive numbers is `floor(x + 0.5)`, with the half built as `1/(1+1)` so it is not a copied balance number.
-- The neutral point 50 is parsed from JSON key suffixes `_over_50` / `_under_50`.
-- The leading 100 in the morale-loss formula and the insight divisor are `battle.morale.cap`.
+- The neutral point 50 is parsed from JSON key suffixes `_over_50` / `_under_50`. There is no dedicated neutral key in the spec, so one was not invented.
+- The leading 100 in the morale-loss formula, the insight divisor, `strength_below_pct`, and hidden-trigger percents all use `battle.morale.cap`. A separate scale key was not added.
+- Gumbel `u` is kept off 0 and 1 by `2^-20`. The spec does not name that epsilon, so it is not a new JSON key.
 - Timeout weights are parsed from `battle.timeout.score`. The ratio uses strength, not headcount, because spec §15.3 and `units.json` both say timeout uses strength.
-- Morale-shaken thresholds are `messenger.auto_reserves.morale_below` (45) and the `panic_prone` trigger (35). Hidden-bravery reveal and the temperament 25% loss are parsed from the trigger strings in `attributes.json`.
+- Morale-shaken thresholds are `messenger.auto_reserves.morale_below` and the `panic_prone` trigger. Hidden-bravery reveal and the temperament loss percent are parsed from the trigger strings in `attributes.json`.
 - Cannon canister and “melee only at distance 0” come from `units.cannon` reach plus `units.canister`. Cavalry fire is logged as `volley` with that unit’s `narration_plural`. Cannon melee is logged as `melee`.
 - Pursuit uses the cavalry melee package times `battle.pursuit.winner_cavalry_melee_mult`, with no extra RNG draw, and only against a side that routed. The prototype did not implement pursuit.
-- Hidden traits follow spec §6.3 and do not consume RNG. The prototype did not simulate them.
+- Hidden traits follow `traits.json` and `hidden_trigger_rules` (spec §6.3 and §15.3). Casualty triggers with an optional `value` need that percent of starting strength. Duration effects start on the following ticks. The cannon share of morale loss is `1 − s × (1 − m)`.
 - Scenario modifiers (hold, fire, damage taken, morale loss, formation bias, objective) run only when the `scenario` argument is set. S6 checks that `scenario = null` is byte-identical whether or not `scenarios.json` is loaded, and that passing Hold the Fort changes the log.
-- A visible trait is “non-battle” for B14 when every effect key is one of `training_mult`, `wisdom_gain_mult`, `messenger_delay_add`, `auto_reserve_delay_add`, `auto_reserve_tick_override`. Hesitant is non-battle in the no-messenger, no-reserve setup. Glory Seeker is a battle weakness because it also moves the rout threshold.
+- A visible trait is non-battle for B14 when every effect key is `training_mult` or `wisdom_gain_mult` (Quick Study, Slow Learner, Vain). Hesitant is measured with the infantry reserve fraction named in the B14 row of sim-plan.
 - Archetype armies use `battle.ai_general` shares: floor the point share, floor-divide by cost, leftover points to `infantry`.
-- Officer generation for the harness follows the prototype reading of sim-plan §1: one `randint(35, 55)` plus an independent normal per visible stat, hidden stats `randint(30, 70)`, no traits unless the check adds one.
+- Officer generation for the harness is the sim-plan §1 sentence: one `randint` plus an independent normal per visible stat, hidden `randint`, no traits unless the check adds one. The numbers are read from that sentence.
 - Setup RNG and battle RNG are separate generators seeded with the same trial seed.
 - `hash32` is FNV-1a 32-bit. The spec names the function and does not define the mix.
 - `ln`, `exp`, and `cos` go through `scripts/portable_math.gd`. The series is only arithmetic.
 - Log hashes and `inputs_hash` use `JSON.stringify` with full precision (Grisu2). The default printer calls `log10` and `snprintf`. On the previous SHA that printer, not the battle math, was what made 73 of 1,000 Windows B1 logs differ from Linux and macOS.
 
-## Bands the current math misses
+## v1.4
 
-These were checked against the v1.3 Python prototype. They are not Godot-only. Data was not changed.
-
-- **B5 Column > Pincer.** Godot 35.8% countered. The prototype's own matrix on this data is 36.4%. Spec §11.1 and §15 keep ×1.07/×0.94. The published 22–31% pair band does not hold for this pair at a stable sample.
-- **B14 Steady Under Shot.** Godot 60.6%. The prototype's 50.4% never applies `morale_loss_from_cannon_mult` (cannon casualties are computed and then ignored). Adding the spec §6.1 ×0.75 split to the prototype measures about 62%. Spec §6.1 supports applying it.
-- **B15.** Hidden traits were not in the prototype. A prototype with the §6.3 effects measures Lion's Heart ~81%, Cool Under Fire ~63%, Panic-Prone ~25%, Shaken by Guns ~38%, matching Godot. Reveal rates sit above 60% because the spec triggers (first casualties, distance below 4, tick 8, morale below 30 or 35) fire in most battles.
+The data files are the Systems Designer's v1.4 tables, copied verbatim. Spec §6.3 and §15.3 describe the hidden-trigger rules the resolver follows. B5, B14, and B15 were retuned in those tables. This tree does not simulate breeding (R), progression (P), the campaign board (C), or the scenario campaign checks other than S6.

@@ -61,8 +61,6 @@ func resolve_battle(army_a: Dictionary, army_b: Dictionary, terrain: String, see
 	for tick in range(1, _d.max_ticks + 1):
 		last_tick = tick
 		emit_target = []
-		_trigger_rash(side_a)
-		_trigger_rash(side_b)
 		_arrive(side_a, tick)
 		_arrive(side_b, tick)
 		_auto_reserve(side_a, tick)
@@ -81,14 +79,16 @@ func resolve_battle(army_a: Dictionary, army_b: Dictionary, terrain: String, see
 		if log_on:
 			_emit_strikes(side_a, side_b, hit_b, took_b["lost"], _lost_head(took_a))
 			_emit_strikes(side_b, side_a, hit_a, took_a["lost"], _lost_head(took_b))
-		_flag_first_hits(side_b, took_b)
-		_flag_first_hits(side_a, took_a)
-		_morale(side_a, took_a, na)
-		_morale(side_b, took_b, nb)
+		_flag_first_hits(side_b, took_b, hit_b)
+		_flag_first_hits(side_a, took_a, hit_a)
+		_morale(side_a, took_a, hit_a, na)
+		_morale(side_b, took_b, hit_b, nb)
 		_after_morale(side_a, tick)
 		_after_morale(side_b, tick)
 		_decay(side_a)
 		_decay(side_b)
+		_arm_durations(side_a)
+		_arm_durations(side_b)
 		_mark_rout(side_a)
 		_mark_rout(side_b)
 		var decision = _decide(tick, side_a, side_b)
@@ -151,7 +151,7 @@ func preview_strike(army_a: Dictionary, army_b: Dictionary, terrain: String, dis
 	var applied = raw * float(hit["taken_m"])
 	var took = _apply_hits(side_b, side_a, hit)
 	var before = side_b.morale
-	_morale(side_b, took, 0.0)
+	_morale(side_b, took, hit, 0.0)
 	return {
 		"raw_strength": raw,
 		"applied_raw": applied,
@@ -284,7 +284,6 @@ func _apply_visible(s) -> void:
 	s.rout_add = 0.0
 	s.msg_delay = _d.msg_delay
 	s.auto_tick = int(_d.stance_auto[s.stance])
-	var override = false
 	for tid in [s.strength_id, s.weakness_id]:
 		var effect = _effect(tid)
 		if effect.is_empty():
@@ -305,7 +304,6 @@ func _apply_visible(s) -> void:
 			s.msg_delay += int(effect["messenger_delay_add"])
 		if effect.has("auto_reserve_tick_override"):
 			s.auto_tick = int(effect["auto_reserve_tick_override"])
-			override = true
 		if effect.has("auto_reserve_delay_add"):
 			s.auto_tick += int(effect["auto_reserve_delay_add"])
 		_mul_unit_map(s.trait_fire, effect.get("fire_mult", null))
@@ -323,8 +321,6 @@ func _apply_visible(s) -> void:
 				if _d.formation_index.has(str(fid)):
 					var fi = int(_d.formation_index[str(fid)])
 					s.trait_bias[fi] = float(s.trait_bias[fi]) + float(effect["ai_bias"][fid])
-	if not override:
-		pass
 	s.pen_scale = (1.0 + _d.ada_per * (s.attrs[_d.idx_ada] - _d.neutral)) * s.pen_trait
 
 
@@ -567,21 +563,65 @@ func _skill_mult(s, skill_name: String) -> float:
 	return 1.0 + _d.skill_per * (s.skills[idx] - _d.neutral)
 
 
-func _trigger_rash(s) -> void:
+func _trigger_row(s):
 	if s.hidden_id == "" or s.hidden_on:
-		return
+		return null
 	var row = _d.trait_by_id.get(s.hidden_id, null)
 	if row == null or not row.has("trigger"):
+		return null
+	return row
+
+
+func _loss_need(s, trigger: Dictionary) -> float:
+	if not trigger.has("value") or s.s0 <= 0.0:
+		return 0.0
+	return float(trigger["value"]) / _d.stat_scale * s.s0
+
+
+func _raw_sum(hit: Dictionary, key: String) -> float:
+	var sum = 0.0
+	for v in hit[key]:
+		sum += float(v)
+	return sum * float(hit["taken_m"])
+
+
+func _fire_hidden(s, effect: Dictionary) -> void:
+	s.hidden_on = true
+	if effect.has("once_morale_add"):
+		s.morale = _clamp(s.morale + float(effect["once_morale_add"]), _d.morale_min, _d.morale_cap)
+	if effect.has("restore_lost_morale_frac"):
+		var lost = max(0.0, s.m0 - s.morale)
+		s.morale = _clamp(s.morale + float(effect["restore_lost_morale_frac"]) * lost, _d.morale_min, _d.morale_cap)
+	if effect.has("rout_threshold_add"):
+		s.rout_thr += float(effect["rout_threshold_add"])
+	if effect.has("morale_loss_from_cannon_mult"):
+		s.cannon_loss_mult *= float(effect["morale_loss_from_cannon_mult"])
+	if effect.has("no_morale_loss_ticks"):
+		s.cool_left = int(effect["no_morale_loss_ticks"])
+	if effect.has("duration_ticks"):
+		s.arm_after = true
+		s.arm_ticks = int(effect["duration_ticks"])
+		if effect.has("advance_add"):
+			s.arm_advance = float(effect["advance_add"])
+		if effect.has("damage_taken_mult"):
+			s.arm_taken = float(effect["damage_taken_mult"])
+		if effect.has("casualties_taken_mult"):
+			s.arm_lucky = float(effect["casualties_taken_mult"])
+	_reveal_trait(s, s.hidden_id)
+
+
+func _arm_durations(s) -> void:
+	# duration_ticks effects start on the ticks after the trigger tick.
+	if not s.arm_after:
 		return
-	if str(row["trigger"].get("type", "")) != "distance_below":
-		return
-	if dist < float(row["trigger"]["value"]):
-		s.hidden_on = true
-		var effect: Dictionary = row["effect"]
-		s.rash_left = int(effect.get("duration_ticks", 0))
-		s.rash_advance = float(effect.get("advance_add", 0.0))
-		s.rash_taken_mult = float(effect.get("damage_taken_mult", 1.0))
-		_reveal_trait(s, s.hidden_id)
+	s.arm_after = false
+	if s.arm_advance != 0.0 or s.arm_taken != 1.0:
+		s.rash_left = s.arm_ticks
+		s.rash_advance = s.arm_advance
+		s.rash_taken_mult = s.arm_taken
+	if s.arm_lucky != 1.0:
+		s.lucky_left = s.arm_ticks
+		s.lucky_mult = s.arm_lucky
 
 
 func _arrive(s, tick: int) -> void:
@@ -645,27 +685,50 @@ func _reserve_men(s) -> int:
 func _move(side_a, side_b) -> void:
 	var adv_a = _one_advance(side_a)
 	var adv_b = _one_advance(side_b)
-	dist = max(0.0, dist - adv_a["adv"] - adv_b["adv"])
+	var step = float(adv_a["adv"]) + float(adv_b["adv"])
+	var floor_d = _hold_floor(side_a, side_b)
+	var next = dist - step
+	if next < floor_d:
+		var used = max(0.0, dist - floor_d)
+		if step > 0.0:
+			var scale = used / step
+			adv_a["adv"] = float(adv_a["adv"]) * scale
+			adv_b["adv"] = float(adv_b["adv"]) * scale
+		next = floor_d
+	dist = max(0.0, next)
 	_log_move(side_a, adv_a)
 	_log_move(side_b, adv_b)
 
 
+func _hold_floor(side_a, side_b) -> float:
+	# When every side that is allowed to close is bound by a hold, the close
+	# stops on that line. Rash cannot step a Cautious pair through it.
+	var floor_d = 0.0
+	for s in [side_a, side_b]:
+		if s.holds:
+			continue
+		var hold = float(_d.stance_hold[s.stance])
+		if hold < 0.0:
+			return 0.0
+		if hold > floor_d:
+			floor_d = hold
+	return floor_d
+
+
 func _one_advance(s) -> Dictionary:
+	# Spec §15.3: base advance, then Rash, floored at 0. The Cautious hold and a
+	# holds_position defender are the same rule, applied after Rash, so a unit
+	# that is already holding stays at 0.
 	var adv = float(_d.stance_advance[s.stance]) + float(_d.form_advance[s.formation]) + float(terr["advance"])
-	var holding = false
-	var hold = float(_d.stance_hold[s.stance])
-	if hold >= 0.0 and dist <= hold:
-		adv = 0.0
-		holding = true
-	if s.holds:
-		adv = 0.0
-		holding = true
-	if s.rash_left > 0 and not s.holds:
+	if s.rash_left > 0:
 		adv += s.rash_advance
-	if s.holds:
-		adv = 0.0
 	if adv < 0.0:
 		adv = 0.0
+	var holding = false
+	var hold = float(_d.stance_hold[s.stance])
+	if s.holds or (hold >= 0.0 and dist <= hold):
+		adv = 0.0
+		holding = true
 	return {"adv": adv, "holding": holding}
 
 
@@ -771,13 +834,6 @@ func _maybe_lucky(defn, hit: Dictionary) -> void:
 	var mult = 1.0
 	if defn.lucky_left > 0:
 		mult = defn.lucky_mult
-	elif defn.hidden_id == "lucky" and not defn.hidden_on:
-		defn.hidden_on = true
-		var effect = _effect("lucky")
-		defn.lucky_mult = float(effect.get("casualties_taken_mult", 1.0))
-		defn.lucky_left = int(effect.get("duration_ticks", 0))
-		mult = defn.lucky_mult
-		_reveal_trait(defn, "lucky")
 	if mult == 1.0:
 		return
 	_scale_hit(hit, mult)
@@ -932,24 +988,37 @@ func _split_ints(total: int, weights: PackedFloat64Array) -> PackedInt32Array:
 	return out
 
 
-func _flag_first_hits(s, took: Dictionary) -> void:
+func _flag_first_hits(s, took: Dictionary, hit: Dictionary) -> void:
+	_casualty_triggers(s, took, hit)
 	if float(took["strength"]) <= 0.0:
 		return
-	if s.hidden_id == "cool_under_fire" and not s.hidden_on:
-		s.hidden_on = true
-		s.cool_left = int(_effect("cool_under_fire").get("no_morale_loss_ticks", 0))
-		_reveal_trait(s, "cool_under_fire")
-	if s.hidden_id == "shaken_by_guns" and not s.hidden_on and float(took["cannon"]) > 0.0:
-		s.hidden_on = true
-		s.cannon_loss_mult *= float(_effect("shaken_by_guns").get("morale_loss_from_cannon_mult", 1.0))
-		_reveal_trait(s, "shaken_by_guns")
 	if _d.trig_agg.contains("melee") and s.saw_melee:
 		_reveal_attr(s, "aggression")
 	if float(s.lost_strength) >= _d.temp_loss_frac * s.s0:
 		_reveal_attr(s, "temperament")
 
 
-func _morale(s, took: Dictionary, noise: float) -> void:
+func _casualty_triggers(s, took: Dictionary, hit: Dictionary) -> void:
+	var row = _trigger_row(s)
+	if row == null:
+		return
+	var trigger: Dictionary = row["trigger"]
+	var kind := str(trigger.get("type", ""))
+	var need := _loss_need(s, trigger)
+	var fire := false
+	if kind == "first_casualties":
+		var lost := float(took["strength"])
+		fire = lost > 0.0 and (not trigger.has("value") or lost >= need)
+	elif kind == "cannon_casualties":
+		var raw := _raw_sum(hit, "cannon")
+		fire = raw > 0.0 and (not trigger.has("value") or raw >= need)
+	elif kind == "distance_below":
+		fire = dist < float(trigger.get("value", 0.0))
+	if fire:
+		_fire_hidden(s, row["effect"])
+
+
+func _morale(s, took: Dictionary, hit: Dictionary, noise: float) -> void:
 	var strength = float(took["strength"])
 	if strength <= 0.0:
 		var regen = _d.regen_base + _d.insp_regen_per * (s.hidden_v[_d.idx_insp] - _d.neutral)
@@ -959,11 +1028,17 @@ func _morale(s, took: Dictionary, noise: float) -> void:
 	else:
 		var loss = 0.0
 		if s.cool_left <= 0 and s.s0 > 0.0:
-			var part_c = (float(took["cannon"]) + _d.melee_extra * float(took["cannon_melee"])) / s.s0
-			var other_s = strength - float(took["cannon"])
-			var other_m = float(took["melee"]) - float(took["cannon_melee"])
-			var part_o = (other_s + _d.melee_extra * other_m) / s.s0
-			loss = (part_o + part_c * s.cannon_loss_mult) * _d.loss_k * _d.stat_scale
+			# Spec §15.3 cannon share: base × (1 − s × (1 − m)).
+			# s is cannon damage / all damage before rounding. m is the product
+			# of morale_loss_from_cannon_mult, including a hidden trait that
+			# fired on this tick's damage.
+			var base = strength + _d.melee_extra * float(took["melee"])
+			var raw_all = _raw_sum(hit, "total")
+			var share = 0.0
+			if raw_all > 0.0:
+				share = _raw_sum(hit, "cannon") / raw_all
+			var factor = 1.0 - share * (1.0 - s.cannon_loss_mult)
+			loss = base / s.s0 * factor * _d.loss_k * _d.stat_scale
 			loss *= s.loss_mult
 			if s.rally_left > 0:
 				loss *= _d.rally_loss_mult
@@ -980,41 +1055,15 @@ func _morale(s, took: Dictionary, noise: float) -> void:
 
 
 func _after_morale(s, tick: int) -> void:
-	if s.hidden_id == "" or s.hidden_on:
-		_lion_panic_wind(s, tick)
+	var row = _trigger_row(s)
+	if row == null:
 		return
-	var row = _d.trait_by_id.get(s.hidden_id, null)
-	if row != null and row.has("trigger"):
-		var kind = str(row["trigger"].get("type", ""))
-		if kind == "morale_below" and s.morale < float(row["trigger"]["value"]):
-			_fire_hidden_morale(s)
-		elif kind == "tick_reached" and tick >= int(row["trigger"]["value"]):
-			_fire_second_wind(s)
-	_lion_panic_wind(s, tick)
-
-
-func _fire_hidden_morale(s) -> void:
-	s.hidden_on = true
-	var effect = _effect(s.hidden_id)
-	if effect.has("once_morale_add"):
-		s.morale = _clamp(s.morale + float(effect["once_morale_add"]), _d.morale_min, _d.morale_cap)
-	if effect.has("rout_threshold_add"):
-		s.rout_thr += float(effect["rout_threshold_add"])
-	_reveal_trait(s, s.hidden_id)
-
-
-func _fire_second_wind(s) -> void:
-	s.hidden_on = true
-	var frac = float(_effect(s.hidden_id).get("restore_lost_morale_frac", 0.0))
-	var lost = max(0.0, s.m0 - s.morale)
-	s.morale = _clamp(s.morale + frac * lost, _d.morale_min, _d.morale_cap)
-	_reveal_trait(s, s.hidden_id)
-
-
-func _lion_panic_wind(s, _tick: int) -> void:
-	# Morale-threshold hidden traits are applied in _fire_hidden_morale.
-	# This hook stays so a later trait can stack after the reveal without a new draw.
-	pass
+	var trigger: Dictionary = row["trigger"]
+	var kind := str(trigger.get("type", ""))
+	if kind == "morale_below" and s.morale < float(trigger["value"]):
+		_fire_hidden(s, row["effect"])
+	elif kind == "tick_reached" and tick >= int(trigger["value"]):
+		_fire_hidden(s, row["effect"])
 
 
 func _decay(s) -> void:
@@ -1108,20 +1157,30 @@ func _pursuit_if_rout(winner: String, side_a, side_b) -> void:
 		wz += w
 	if wz <= 0.0 or dmg <= 0.0:
 		return
-	var lost = PackedInt32Array()
-	lost.resize(n)
+	var total = PackedFloat64Array()
+	var melee = PackedFloat64Array()
+	var cannon = PackedFloat64Array()
+	var cannon_melee = PackedFloat64Array()
+	total.resize(n)
+	melee.resize(n)
+	cannon.resize(n)
+	cannon_melee.resize(n)
 	for ti in n:
-		var share = dmg * taken_m * weights[ti] / wz
-		var troops = mini(int(lose_s.front[ti]), round_half(share / _d.toughness[ti]))
-		if troops < 0:
-			troops = 0
-		lost[ti] = troops
-		lose_s.front[ti] = int(lose_s.front[ti]) - troops
-	var cas = {}
+		var share = dmg * weights[ti] / wz
+		total[ti] = share
+		melee[ti] = share
+	var took = _apply_hits(lose_s, win_s, {
+		"events": [],
+		"total": total,
+		"melee": melee,
+		"cannon": cannon,
+		"cannon_melee": cannon_melee,
+		"taken_m": taken_m,
+	})
+	var cas: Dictionary = took["by_type"]
 	var head = 0
 	for ti in n:
-		cas[_d.unit_ids[ti]] = int(lost[ti])
-		head += int(lost[ti])
+		head += int(cas[_d.unit_ids[ti]])
 	if head <= 0:
 		return
 	_emit({
@@ -1475,6 +1534,11 @@ class Side:
 	var rash_left = 0
 	var rash_advance = 0.0
 	var rash_taken_mult = 1.0
+	var arm_after = false
+	var arm_ticks = 0
+	var arm_advance = 0.0
+	var arm_taken = 1.0
+	var arm_lucky = 1.0
 	var lucky_left = 0
 	var lucky_mult = 1.0
 	var cool_left = 0

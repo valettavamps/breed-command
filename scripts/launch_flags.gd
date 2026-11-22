@@ -1,8 +1,8 @@
 extends RefCounted
 ## Single parser for process flags.
-## M1 does not gate these on a Steam QA-build flag. The gate belongs here
-## later: a public build will ignore --scope-id, --clock, --local-clock
-## and --net-state unless that flag is set. The harness always reads them.
+## AC-8-PUBLIC-FLAGS-IGNORED: a public build will ignore --scope-id, --clock,
+## --local-clock and --net-state unless a QA-build flag is set. That gate is
+## deferred to M4. M1 reads the flags and threads them into GameClock.
 
 const FLAG_SCOPE := "--scope-id"
 const FLAG_CLOCK := "--clock"

@@ -1,6 +1,6 @@
 {
   "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
-  "version": "1.3",
+  "version": "1.4",
   "variant_pick": "variant index = hash(seed, tick, event_index) mod variant_count",
   "placeholders": {
     "formation_name": "formations.<id>.name (display name)",

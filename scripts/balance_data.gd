@@ -23,7 +23,6 @@ var unit_range: PackedFloat64Array = PackedFloat64Array()
 var unit_reach: PackedFloat64Array = PackedFloat64Array()
 var unit_morale: PackedFloat64Array = PackedFloat64Array()
 var exposure: PackedFloat64Array = PackedFloat64Array()
-var speed: PackedInt32Array = PackedInt32Array()
 var fire_skill: PackedStringArray = PackedStringArray()
 var melee_skill: PackedStringArray = PackedStringArray()
 
@@ -141,7 +140,6 @@ var idx_int := 0
 var idx_ath := 0
 var idx_ada := 0
 var idx_brv := 0
-var idx_naf := 0
 var idx_lead := 0
 var idx_bt := 0
 var idx_insp := 0
@@ -164,10 +162,21 @@ var templates := {}
 var narration_placeholders := {}
 var data_version := ""
 var scenarios_loaded := true
+var trigger_rules := {}
+var omit_tables: Array = []
 
 
 static func create():
+	return _open([])
+
+
+static func create_omitting(keys: Array):
+	return _open(keys)
+
+
+static func _open(omit: Array):
 	var data = load("res://scripts/balance_data.gd").new()
+	data.omit_tables = omit
 	if not data._load():
 		return null
 	return data
@@ -196,12 +205,14 @@ func _load() -> bool:
 		push_error("no data tables")
 		return false
 	for name in names:
+		var key := str(name).trim_suffix(".json")
+		if omit_tables.has(key):
+			continue
 		var path := "res://data/%s" % name
 		var bytes := FileAccess.get_file_as_bytes(path)
 		if bytes.is_empty():
 			push_error("empty data file %s" % name)
 			return false
-		var key := str(name).trim_suffix(".json")
 		hashes[key] = HashUtil.sha256_bytes(bytes)
 		paths[key] = path
 		var text := bytes.get_string_from_utf8()
@@ -216,6 +227,8 @@ func _load() -> bool:
 		"narration", "scenarios", "campaign", "battle",
 	]
 	for req in required:
+		if omit_tables.has(req):
+			continue
 		if not parsed.has(req):
 			push_error("missing table %s" % req)
 			return false
@@ -254,7 +267,8 @@ func _index() -> bool:
 	_index_skills()
 	_index_attrs()
 	_index_ranks()
-	_index_traits()
+	if not _index_traits():
+		return false
 	_index_battle()
 	_index_text()
 	scenarios_loaded = parsed.has("scenarios")
@@ -346,7 +360,6 @@ func _index_units() -> void:
 		unit_reach.append(float(u["melee_reach"]))
 		unit_morale.append(float(u["morale"]))
 		exposure.append(float(u["exposure"]))
-		speed.append(int(u["speed"]))
 		fire_skill.append(str(u["fire_skill"]))
 		melee_skill.append(str(u["melee_skill"]))
 		n += 1
@@ -535,7 +548,6 @@ func _index_attrs() -> void:
 	idx_ath = int(innate_index["athleticism"])
 	idx_ada = int(innate_index["adaptability"])
 	idx_brv = int(innate_index["bravery"])
-	idx_naf = int(innate_index["natural_affinity"])
 	idx_insp = int(hidden_index["inspiration"])
 	idx_agg = int(hidden_index["aggression"])
 	idx_temp = int(hidden_index["temperament"])
@@ -563,7 +575,11 @@ func _index_ranks() -> void:
 		rank_command[id] = str(row.get("command_size", ""))
 
 
-func _index_traits() -> void:
+func _index_traits() -> bool:
+	if not parsed["traits"].has("hidden_trigger_rules"):
+		push_error("traits.json is missing hidden_trigger_rules")
+		return false
+	trigger_rules = parsed["traits"]["hidden_trigger_rules"]
 	for group in ["strengths", "weaknesses", "hidden"]:
 		for row in parsed["traits"][group]:
 			var id := str(row["id"])
@@ -578,6 +594,7 @@ func _index_traits() -> void:
 		if str(row["id"]) == "panic_prone" and row.has("trigger"):
 			shaken_low = float(row["trigger"]["value"])
 	shaken_high = float(parsed["messenger"]["auto_reserves"]["morale_below"])
+	return true
 
 
 func _index_battle() -> void:
@@ -615,10 +632,11 @@ func _index_text() -> void:
 	for id in rank_ids:
 		if str(rank_command[id]) == "":
 			push_error("empty command_size for %s" % id)
-	for sid in parsed["scenarios"]["scenarios"].keys():
-		var note = parsed["scenarios"]["scenarios"][sid].get("historical_odds_note", "")
-		if str(note) == "":
-			push_error("empty historical_odds_note for %s" % sid)
+	if parsed.has("scenarios"):
+		for sid in parsed["scenarios"]["scenarios"].keys():
+			var note = parsed["scenarios"]["scenarios"][sid].get("historical_odds_note", "")
+			if str(note) == "":
+				push_error("empty historical_odds_note for %s" % sid)
 
 
 func rank_id_for_budget(budget: int) -> String:
@@ -644,6 +662,3 @@ func archetype_companies(arch: String, budget: int) -> Dictionary:
 	return counts
 
 
-func drop_scenarios() -> void:
-	scenarios_loaded = false
-	parsed.erase("scenarios")

@@ -1,6 +1,24 @@
 {
   "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
-  "version": "1.3",
+  "version": "1.4",
+  "hidden_trigger_rules": {
+    "_status": "v1.4 (SD-4): written down so the engine and prototype agree",
+    "check_time": "each hidden trigger is checked once per tick, after that side's morale step (spec 15.3 step 4) and before the rout check; a hidden trait fires at most once per battle and is revealed on the tick it fires",
+    "types": {
+      "morale_below": "morale after the morale step < value",
+      "tick_reached": "tick >= value",
+      "distance_below": "distance after movement < value",
+      "first_casualties": "strength lost this tick > 0, and >= value% of the side's starting strength S when value is set (v1.4: optional value)",
+      "cannon_casualties": "strength damage dealt by enemy cannon this tick (before rounding) > 0, and >= value% of S when value is set (v1.4: optional value)"
+    },
+    "effect_timing": {
+      "once_morale_add, restore_lost_morale_frac, rout_threshold_add": "applied at once, before the rout check that tick; rout_threshold_add lasts the rest of the battle",
+      "morale_loss_from_cannon_mult": "applies to the cannon share of morale loss from the trigger tick's own morale step onwards (the trigger is tested on that tick's damage before morale is applied)",
+      "duration_ticks effects (advance_add, damage_taken_mult, casualties_taken_mult)": "active for the next duration_ticks ticks after the trigger tick",
+      "no_morale_loss_ticks": "unused in v1.4"
+    },
+    "cannon_share": "morale loss base (strengthLost + 0.25 x meleeStrengthLost) is multiplied by (1 - s x (1 - m)), where s = enemy cannon strength damage / all enemy strength damage this tick (before rounding) and m = product of morale_loss_from_cannon_mult from visible traits and any fired hidden trait"
+  },
   "rules": {
     "visible_strengths": 1,
     "visible_weaknesses": 1,
@@ -126,7 +144,7 @@
       "kind": "strength",
       "dominance": "recessive",
       "effect": {
-        "morale_loss_from_cannon_mult": 0.75
+        "morale_loss_from_cannon_mult": 0.92
       },
       "description": "Barely flinches at the guns."
     },
@@ -136,7 +154,7 @@
       "kind": "strength",
       "dominance": "recessive",
       "effect": {
-        "ai_insight_bonus": 0.15
+        "ai_insight_bonus": 0.4
       },
       "description": "Reads the enemy's plan early."
     },
@@ -251,7 +269,10 @@
       "kind": "weakness",
       "dominance": "dominant",
       "effect": {
-        "ai_insight_bonus": -0.15
+        "ai_insight_bonus": -0.15,
+        "ai_bias": {
+          "wide_line": 0.2
+        }
       },
       "description": "Fights the battle he planned, not the one in front of him."
     },
@@ -304,12 +325,12 @@
       "kind": "hidden_good",
       "dominance": "recessive",
       "effect": {
-        "once_morale_add": 15
+        "once_morale_add": 3
       },
       "description": "Roars back when all seems lost.",
       "trigger": {
         "type": "morale_below",
-        "value": 30
+        "value": 22
       }
     },
     {
@@ -318,11 +339,12 @@
       "kind": "hidden_good",
       "dominance": "dominant",
       "effect": {
-        "no_morale_loss_ticks": 1
+        "rout_threshold_add": -1
       },
-      "description": "The first volley bounces off him.",
+      "description": "Keeps his head when the line starts to waver.",
       "trigger": {
-        "type": "first_casualties"
+        "type": "morale_below",
+        "value": 25
       }
     },
     {
@@ -331,12 +353,12 @@
       "kind": "hidden_good",
       "dominance": "recessive",
       "effect": {
-        "restore_lost_morale_frac": 0.1
+        "restore_lost_morale_frac": 0.07
       },
       "description": "Finds a second wind late in the day.",
       "trigger": {
         "type": "tick_reached",
-        "value": 8
+        "value": 10
       }
     },
     {
@@ -345,12 +367,12 @@
       "kind": "hidden_bad",
       "dominance": "recessive",
       "effect": {
-        "rout_threshold_add": 8
+        "rout_threshold_add": 1.5
       },
       "description": "Panic spreads from the command tent.",
       "trigger": {
         "type": "morale_below",
-        "value": 35
+        "value": 25
       }
     },
     {
@@ -360,13 +382,13 @@
       "dominance": "dominant",
       "effect": {
         "advance_add": 0.5,
-        "damage_taken_mult": 1.05,
+        "damage_taken_mult": 1.15,
         "duration_ticks": 3
       },
-      "description": "Can't resist closing early.",
+      "description": "Charges in hot-headed once blood is drawn.",
       "trigger": {
-        "type": "distance_below",
-        "value": 4
+        "type": "first_casualties",
+        "value": 10
       }
     },
     {
@@ -375,12 +397,13 @@
       "kind": "hidden_good",
       "dominance": "recessive",
       "effect": {
-        "casualties_taken_mult": 0.85,
-        "duration_ticks": 3
+        "casualties_taken_mult": 0.9,
+        "duration_ticks": 2
       },
       "description": "Shot passes him by.",
       "trigger": {
-        "type": "first_casualties"
+        "type": "first_casualties",
+        "value": 10
       }
     },
     {
@@ -389,11 +412,12 @@
       "kind": "hidden_bad",
       "dominance": "recessive",
       "effect": {
-        "morale_loss_from_cannon_mult": 1.3
+        "morale_loss_from_cannon_mult": 1.08
       },
       "description": "An old wound from the guns.",
       "trigger": {
-        "type": "cannon_casualties"
+        "type": "cannon_casualties",
+        "value": 4
       }
     }
   ]

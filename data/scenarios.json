@@ -1,6 +1,6 @@
 {
   "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
-  "version": "1.3",
+  "version": "1.4",
   "status": "DECIDED 2026-11-22 (captain): Hold the Fort in V1 at a 47% target (band 44-50%); the Systems Designer added Last Stand at 35% (band 32-38%) as a harder step.",
   "rules": {
     "daily": "v1.1: a scenario is played as a ranked battle only by taking a scenario assignment from the daily board (campaign.json). That uses 1 of the 3 daily ranked battles and gives normal progress (Wisdom x wisdom_win_mult on a win, skills, attribute roll, rank counts, reveals, breeding-eligibility count). Every other scenario play is a replay: free, unlimited, no progress, no battle used.",

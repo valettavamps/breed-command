@@ -5,18 +5,6 @@ extends RefCounted
 
 const HashUtil = preload("res://scripts/hash_util.gd")
 
-# Spec §16 feed cap. The integer collides with a balance value; it is not one.
-const MAX_FEED_LINES := 4
-
-const PRIORITY: Array = [
-	["rout", "battle_end_win", "battle_end_draw", "scenario_held", "scenario_losses_reached", "pursuit"],
-	["messenger_sent", "standing_order_cancelled", "live_click_ignored", "rally", "reserves_committed", "auto_reserves", "messenger_wasted", "messenger_lost", "trait_revealed", "hidden_attribute_revealed"],
-	["charge"],
-	["cannon", "canister"],
-	["volley", "melee"],
-	["advance", "hold", "formation_chosen", "battle_start", "morale_shaken"],
-]
-
 
 static func variant_index(seed: int, tick: int, event_index: int, count: int) -> int:
 	if count <= 1:
@@ -74,20 +62,3 @@ static func fmt_number(x: float, places: int, half: float) -> String:
 	if fs == "0":
 		return "%s%d" % [neg, whole]
 	return "%s%d.%s" % [neg, whole, fs]
-
-
-static func feed_lines(lines_in_priority: Array) -> PackedStringArray:
-	var out := PackedStringArray()
-	for group in lines_in_priority:
-		for line in group:
-			if out.size() >= MAX_FEED_LINES:
-				return out
-			out.append(str(line))
-	return out
-
-
-static func priority_bucket(kind: String) -> int:
-	for i in PRIORITY.size():
-		if PRIORITY[i].has(kind):
-			return i
-	return PRIORITY.size()

@@ -1,6 +1,6 @@
 {
   "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
-  "version": "1.3",
+  "version": "1.4",
   "status": "D11 DECIDED 2026-11-22 (captain): one-time Steam purchase, no subscription, DLC later under never_sold. D4 and D10 DECIDED the same day.",
   "business_model": {
     "type": "buy_to_play",

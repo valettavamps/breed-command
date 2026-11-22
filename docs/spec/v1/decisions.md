@@ -2,7 +2,7 @@
 
 Ranked by importance, one decision per section. Every decision below was made by the captain on 2026-11-22; the spec and the JSON use exactly these answers.
 
-**Status (2026-11-22): spec v1.3** (text-only update; no number changed). D1-D14 are all decided by the captain. One proposal awaits the captain: Attack Column > Pincer at ×1.10 / ×0.91, a refinement of D2; until then, ×1.07 / ×0.94 stand. There are no open decisions. There are no open questions. Deferred ideas are listed at the end.
+**Status (2026-11-22): spec v1.4** (SD-4 balance fixes for B5, B14, B15; no decision changed). D1-D14 are all decided by the captain. D2 (×1.07 / ×0.94) is unchanged and now passes B5 in the prototype without the ×1.10 / ×0.91 proposal, so that proposal is optional (numbers under D2). There are no open decisions. There are no open questions. Deferred ideas are listed at the end.
 
 ---
 
@@ -20,6 +20,16 @@ Ranked by importance, one decision per section. Every decision below was made by
 ## D2. How hard should formation counters hit?  **DECIDED 2026-11-22 (captain)**
 
 **Decision:** keep the recommended strength. The formation that wins the matchup deals ×1.07 damage and the countered one ×0.94. The countered side should win about 24-29% of battles on average (QA check B5; each pair must stay within 22-31%). Prototype: 28% on average. A +20 officer in the wrong formation still loses 59% of the time, so formation outweighs officer quality as the brief wants.
+
+**v1.4 note (SD-4, no change to the decision):** Lead Dev's M1 run had Pincer countered by Column at 35.8% (B5 band 22-31%). The cause was the Column's own fire (×0.92), not the counter strength, so v1.4 sets `formations.tight_wedge.fire_mult` to 1.00 and keeps ×1.07 / ×0.94. Prototype estimates, not proof (20k battles per orientation):
+
+| Option | Pincer countered by Column | Mean of 4 pairs | Changes D2? |
+|---|---|---|---|
+| v1.3 as built | 35.3% (engine 35.8%) | – | – |
+| **v1.4: Column fire ×1.00, counters ×1.07 / ×0.94** | **29.2%** | 28.2% (pairs 25.9-29.2%) | no |
+| Historian's proposal instead: Column > Pincer ×1.10 / ×0.91, fire ×0.92 | 26.8% | – | yes (captain) |
+
+The ×1.10 / ×0.91 proposal lowers the Pincer's rate; it does not push it out of the band. It is no longer needed to pass B5. The captain can still choose it for historical flavour, but then the pair should be re-measured with the v1.4 fire value, because both together would make that one pair sharper still.
 
 ---
 

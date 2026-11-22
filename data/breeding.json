@@ -1,6 +1,6 @@
 {
   "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
-  "version": "1.3",
+  "version": "1.4",
   "status": "D5 DECIDED 2026-11-22 (captain): attribute wobble sd 4.0 (clamp +/-10)",
   "attributes": {
     "blend": "midparent",

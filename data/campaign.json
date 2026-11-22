@@ -1,6 +1,6 @@
 {
   "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
-  "version": "1.3",
+  "version": "1.4",
   "status": "v1.1 addition 2026-11-22 (captain): the 3 daily ranked battles are offered as assignments from the war general on a campaign map. Solo vs NPC in V1. Changes no balance value.",
   "sides": {
     "blues": {

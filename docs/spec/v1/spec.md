@@ -1,8 +1,25 @@
 # Line of Command: V1 Systems Design Spec
 
-Status: **v1.3, 2026-11-22.** v1.2 FINAL plus text-only changes from the Military Historian's research (see the changelog). **No balance number changed:** a numeric diff of every v1.2 and v1.3 JSON file finds 0 differences in 558 numeric, true/false and null values. Every captain decision (D1-D14) is locked; there are no open decisions. One proposal is awaiting the captain: Attack Column > Pincer at ×1.10 / ×0.91 (`historian-assessment.md`); until he decides, v1.3 keeps ×1.07 / ×0.94. Data version `1.3` in every JSON file. Author: Systems Designer. Audience: Lead Dev (builds it in Godot) and the captain (John).
+Status: **v1.4, 2026-11-22.** v1.3 plus the SD-4 balance fixes for Lead Dev's M1 run (QA B5, B14, B15; see the changelog). A numeric diff of v1.3 → v1.4 finds 20 changed values (all listed in the changelog); no captain decision changed. **D2 is unchanged** (counters stay ×1.07 / ×0.94): the B5 fix is a formation-profile value, so the Column > Pincer ×1.10 / ×0.91 proposal is no longer needed to pass B5 (numbers for the captain in `decisions.md` D2). Every captain decision (D1-D14) is locked; there are no open decisions. Data version `1.4` in every JSON file. Author: Systems Designer. Audience: Lead Dev (builds it in Godot) and the captain (John).
 
 ## Changelog
+
+**v1.4 (2026-11-22): balance fixes for M1 (PR #1, SHA 8809f0a) failing B5, B14 and B15.** All rates below are from the prototype (`prototype/run_checks.py`, ≥20k battles per check, 95% interval about ±0.7 points unless shown); they are prototype estimates, not proof. Lead Dev: re-run the 68 checks on one SHA with these files.
+
+| Check | JSON key | v1.3 | v1.4 | Before → after (prototype) | Why |
+|---|---|---|---|---|---|
+| B5 | `formations.json → formations.tight_wedge.fire_mult` | 0.92 | **1.00** | Pincer countered by Column: 35.3% (engine 35.8%) → **29.2% ±0.4**; mean of 4 pairs 28.2% | The Column was too weak overall, so a Pincer that "lost" the counter still out-shot it before contact. The counter multipliers were not the problem (see §11.2). |
+| B14 | `traits.json → strengths[steady_under_shot].effect.morale_loss_from_cannon_mult` | 0.75 | **0.92** | 61.3% (engine 60.6%) → **54.1%** | ×0.75 on the cannon share of morale loss was worth more than a stat edge. The prototype now applies this key (it did not in v1.3). |
+| B14 | `traits.json → strengths[tactician].effect.ai_insight_bonus` | 0.15 | **0.40** | 50.9% (60k) → **52.1%** (80k; 51.5% in the 20k suite run) | Was under the 51% floor. Insight saturates (perfect insight is only about 53%), so it needs a large bonus. |
+| B14 | `traits.json → weaknesses[stubborn].effect.ai_bias.wide_line` | – | **+0.20** (insight −0.15 kept) | 49.5% (60k) → **48.2%** (80k; 48.5% in the suite run) | Was over the 49% ceiling; more negative insight cannot go lower (clamped at 0). He now also sticks to the Wide Line he planned, which makes him predictable. |
+| B15 | hidden traits, `traits.json → hidden[...]` | see §6.3 | see §6.3 | all 7 now 47.1-53.2% with reveal 25-46% per battle (v1.3 engine: every reveal over 60%) | Triggers were far too common and effects too large. |
+
+- **B15 detail** (old → new): Lion's Heart trigger morale < 30 → **< 22**, `once_morale_add` 15 → **3**. Cool Under Fire **redesigned**: trigger `first_casualties` → `morale_below` **25**; effect `no_morale_loss_ticks: 1` removed, now `rout_threshold_add: −1` (the mirror of Panic-Prone); new description. Second Wind tick 8 → **10**, `restore_lost_morale_frac` 0.10 → **0.07**. Panic-Prone morale < 35 → **< 25**, `rout_threshold_add` 8 → **1.5**. Rash trigger `distance_below 4` → `first_casualties` with **value 10**, `damage_taken_mult` 1.05 → **1.15** (advance +0.5 for 3 ticks unchanged); new description. Lucky trigger gains **value 10**, `casualties_taken_mult` 0.85 → **0.90**, `duration_ticks` 3 → **2**. Shaken by Guns trigger gains **value 4**, `morale_loss_from_cannon_mult` 1.3 → **1.08**.
+- **New `traits.json → hidden_trigger_rules`** (text, §6.3 and §15.3): when triggers are checked, what each type means, when each effect starts, and the cannon-share formula. Written so the engine and prototype agree.
+- **Small engine change (Lead Dev):** `first_casualties` and `cannon_casualties` now take an optional `value` = minimum % of starting strength S lost this tick (all / to cannon). With no `value` they behave as in v1.3.
+- **Prototype fixes:** it now applies `morale_loss_from_cannon_mult` (cannon share, §15.3), simulates hidden traits per §6.3, and scales High Ground's bonus part. Matched to the engine before tuning: Shaken by Guns 37.9% vs engine 37.3%; Steady 61.3% vs 60.6%; B5 pair 35.3% vs 35.8%.
+- **sim-plan.md:** no band changed. B14 setup now says Hesitant is measured with 25% infantry reserves (it only matters with reserves) and names the non-battle traits (Quick Study, Slow Learner, Vain). Measured columns updated.
+- **Full prototype re-run:** every simulated check passes (`prototype/final_checks_v14.txt` and `prototype/final_*_v14.txt`); engine-only checks are listed as such in sim-plan.md.
 
 **v1.3 (2026-11-22): text only, ids and numbers unchanged.** Lead Dev: pick up these display strings. Ids are stable; key code on ids, never on names (§11.1 id policy).
 
@@ -166,8 +183,8 @@ Example: both parents show Iron Nerve (dominant), but both secretly carry Forest
 | drillmaster | Drillmaster | D | infantry melee ×1.08 |
 | gunners_instinct | Gunner's Instinct | R | cannon fire ×1.08 |
 | quick_study | Quick Study | D | training and battle-practice gains ×1.25 |
-| steady_under_shot | Steady Under Shot | R | morale loss from cannon casualties ×0.75 |
-| tactician | Tactician | R | AI insight +0.15 |
+| steady_under_shot | Steady Under Shot | R | morale loss from cannon casualties ×0.92 (cannon share, §15.3) |
+| tactician | Tactician | R | AI insight +0.40 |
 | born_leader | Born Leader | D | starting morale +2 |
 
 ### 6.2 Weaknesses (12)
@@ -182,7 +199,7 @@ Example: both parents show Iron Nerve (dominant), but both secretly carry Forest
 | brittle | Brittle | R | morale loss ×1.04 |
 | slow_learner | Slow Learner | D | training and battle-practice gains ×0.80 |
 | fear_of_water | Fear of Water | R | River Crossing penalties ×1.5 |
-| stubborn | Stubborn | D | AI insight −0.15 |
+| stubborn | Stubborn | D | AI insight −0.15. AI bias Wide Line +0.20 |
 | glory_seeker | Glory Seeker | R | auto-commits reserves at tick 4. Rout threshold +1 |
 | vain | Vain | R | Wisdom gain ×0.85 |
 | cannon_blind | Cannon-Blind | D | cannon fire ×0.94 |
@@ -192,16 +209,23 @@ Example: both parents show Iron Nerve (dominant), but both secretly carry Forest
 | id | Name | Dom. | Trigger | Effect when triggered |
 |---|---|---|---|---|
 | none | – | D | never | nothing |
-| lions_heart | Lion's Heart | R | morale < 30 | once per battle: +15 morale |
-| cool_under_fire | Cool Under Fire | D | first tick with casualties | no morale loss that tick |
-| second_wind | Second Wind | R | tick 8 reached | restore 10% of morale lost so far |
-| panic_prone | Panic-Prone | R | morale < 35 | rout threshold +8 for the rest of the battle |
-| rash | Rash | D | distance < 4 | advance +0.5 and damage taken ×1.05 for 3 ticks |
-| lucky | Lucky | R | first tick with casualties | casualties taken ×0.85 for 3 ticks |
-| shaken_by_guns | Shaken by Guns | R | first cannon casualties | morale loss from cannon casualties ×1.3 for the rest of the battle |
+| lions_heart | Lion's Heart | R | morale < 22 | once per battle: +3 morale |
+| cool_under_fire | Cool Under Fire | D | morale < 25 | rout threshold −1 for the rest of the battle ("keeps his head when the line starts to waver") |
+| second_wind | Second Wind | R | tick 10 reached | restore 7% of morale lost so far |
+| panic_prone | Panic-Prone | R | morale < 25 | rout threshold +1.5 for the rest of the battle |
+| rash | Rash | D | first tick losing ≥ 10% of S | advance +0.5 and damage taken ×1.15 for 3 ticks |
+| lucky | Lucky | R | first tick losing ≥ 10% of S | casualties taken ×0.90 for 2 ticks |
+| shaken_by_guns | Shaken by Guns | R | first tick losing ≥ 4% of S to cannon | morale loss from cannon casualties ×1.08 for the rest of the battle |
+
+**Hidden-trigger rules (v1.4, `traits.json → hidden_trigger_rules`):**
+- Triggers are checked once per tick, after that side's morale step (§15.3 step 4) and before the rout check. A hidden trait fires at most once per battle and is revealed on the tick it fires.
+- `morale_below v`: morale after the morale step < v. `tick_reached v`: tick ≥ v. `first_casualties [v]`: strength lost this tick > 0, and ≥ v% of S when v is set. `cannon_casualties [v]`: strength damage from enemy cannon this tick (before rounding) > 0, and ≥ v% of S when v is set. (`value` on the last two is new in v1.4 and optional.)
+- `once_morale_add`, `restore_lost_morale_frac` and `rout_threshold_add` apply at once, before that tick's rout check; a rout-threshold change lasts the rest of the battle.
+- `morale_loss_from_cannon_mult` (Shaken by Guns) applies from the trigger tick's own morale step onward: the trigger is tested on that tick's damage, then the morale loss uses the new multiplier.
+- Effects with `duration_ticks` (`advance_add`, `damage_taken_mult`, `casualties_taken_mult`) are active for the next N ticks after the trigger tick.
 
 "Penalty part" means a multiplier m < 1 becomes `1 − (1 − m) × scale`. "Bonus part" means m > 1 becomes `1 + (m − 1) × scale`. Trait scales multiply with the Adaptability scale.
-Prototype: a single visible battle strength swings win rate to 51-56.5% and a single weakness to 46-49% (non-battle traits stay at 50%). Hidden traits were not prototyped.
+Prototype (v1.4, 20k battles each, an officer with the trait vs the same officer without it): a single visible battle strength wins 51.5-56.6% and a single weakness 45.2-48.5% (Hesitant measured with 25% infantry reserves); non-battle traits 49.4-50.5%. Hidden traits 47.1-53.2%, each revealed in 25-46% of battles (Lion's Heart 53.2% / 25%, Cool Under Fire 52.3% / 46%, Second Wind 52.5% / 26%, Panic-Prone 47.2% / 46%, Rash 47.4% / 35%, Lucky 51.6% / 35%, Shaken by Guns 47.1% / 46%).
 
 ---
 
@@ -340,13 +364,15 @@ The **player never picks the formation.** The officer does, after seeing the ter
 | Formation | Fire × | Melee × | Damage taken × | Advance + | Other |
 |---|---|---|---|---|---|
 | Wide Line | 1.08 | 0.92 | 1.00 | 0 | |
-| Attack Column | 0.92 | 1.12 | 1.03 | +0.25 | |
+| Attack Column | **1.00** (v1.4; was 0.92) | 1.12 | 1.03 | +0.25 | |
 | Pincer | 1.00 | 1.06 | 1.00 | 0 | cavalry melee ×1.03 |
 | Defensive Screen | 0.98 | 0.96 | 0.97 | −0.25 | |
 
 **D2 DECIDED 2026-11-22 (captain):** counter multipliers stay at ×1.07 for the winner and ×0.94 for the loser. The countered side should win 24-29% on average across the 4 cycle pairs, with each pair within 22-31% (QA check B5, `battle.json → balance_targets`).
 
-Prototype (formations forced uniformly at random, all comps, terrains and stances): Wide Line 50.1%, Column 47.5%, Pincer 51.4%, Screen 51.0%. With the AI picking: Line 48.1%, Column 47.2%, Pincer 53.8%, Screen 51.4%. All are under the 55% cap. A countered formation wins about 28% on average (24.5-30.5% per pair), because 0.94 vs 1.07 is a big swing in a close fight. Per terrain, formations range from 40.8% (Column on Hill) to 56.9% (Pincer in Forest). See decision D2.
+**Why the Column fires at ×1.00 (v1.4, QA B5):** at ×0.92 fire the Column lost the firefight on the approach, so a Pincer it "countered" still won 35-36% (B5 band 22-31%). The counter multiplier was not the weak link: raising Column > Pincer to ×1.10 / ×0.91 lowers the Pincer's rate (to 26.8% in the prototype), it does not push it out, but that would change decision D2. Fixing the Column's own fire keeps D2 and brings the pair to 29.2%. A column still mostly wins by closing (melee ×1.12, advance +0.25); its skirmishers now simply hold their own at range.
+
+Prototype (v1.4, prototype estimates, not proof; 20k battles per orientation): countered side wins on average 28.2%; Pincer countered by Column 29.2%, Line by Pincer 25.9%, Screen by Line 29.1%, Column by Screen 28.5%. Forced formations (B4): Line 48.0%, Column 51.0%, Pincer 51.3%, Screen 49.7%. AI-picked (B4b): Line 46.0%, Column 50.9%, Pincer 52.5%, Screen 52.0%. All are under the 55% cap. Per terrain, formations range from 39.6% to 57.6% (B4c). See decision D2.
 
 ### 11.3 Officer AI: formation choice
 
@@ -506,7 +532,8 @@ Example: 5 inf, 1 cav and 2 cannon give S = 500 + 140 + 300 = 940. Start morale 
      `× (1 − 0.001 × (EB − 50)) × (1 − 0.0006 × (Leadership − 50)) × trait mults × rally 0.90 (if active)`
      `× scenario defender morale_loss_mult (0.85, defender only)` `× (1 + uniform(−n, n))`, where `n = 0.30 × (1 − Temperament/99)`.
    - If it took no casualties: morale `+= 0.5 + 0.02 × (Inspiration − 50)`.
-   - Clamp to 0-100. Then check hidden-trait triggers and hidden-attribute reveal triggers.
+   - **Cannon share (v1.4):** `trait mults` above include cannon-only multipliers (`morale_loss_from_cannon_mult`, Steady Under Shot ×0.92, Shaken by Guns ×1.08 once fired) applied to the cannon share only: the loss is multiplied by `1 − s × (1 − m)`, where `s` = enemy cannon strength damage / all enemy strength damage this tick (before rounding) and `m` = the product of every active `morale_loss_from_cannon_mult`.
+   - Clamp to 0-100. Then check hidden-trait triggers (rules in §6.3: fire at most once, reveal that tick, instant effects apply before step 5) and hidden-attribute reveal triggers.
 5. **Rout check:** a side routs if morale < its threshold or its strength (front + reserve) < 25% of S.
    - Exactly one side routs: the other wins and the battle ends.
    - Both rout: the larger `(morale − threshold)` wins, and equal is a draw.
@@ -594,15 +621,15 @@ Daily reset is at 00:00 UTC (**D9 DECIDED 2026-11-22 (captain)**).
 
 **D3 DECIDED 2026-11-22 (captain):** a +20 total officer edge (every innate attribute, Wisdom and skill +20) targets about **64%**, with a QA band of 60-65% (B2). Leadership stays the strongest single skill (B3b). No single stat at +20 may exceed 56% (B3). These are recorded in `battle.json → balance_targets`. The current officer coefficients in §2-§5 meet all three.
 
-Throwaway Python sim in `/workspace/sim` (copy in `prototype/`) that reads these JSON files. Hidden traits, pursuit and narration were not simulated.
+Throwaway Python sim in `/workspace/sim` (copy in `prototype/`) that reads these JSON files. Pursuit and narration were not simulated; hidden traits are simulated from v1.4 (§6.3). The v1.4 re-run of every simulated check is in `prototype/final_checks_v14.txt` and `prototype/final_*_v14.txt`; the figures in the bullets below are from earlier runs unless marked v1.4.
 - Officer edge (every visible stat +X, random comps, terrain and stances, 6,000 battles): **+10 → 57.4%, +20 → 64.1%, +30 → 70.6%.** This meets the D3 target (about 64%, band 60-65%).
 - Single-stat +20 (5,000 battles each, D3 cap 56%): Leadership 53.3% (strongest skill, as decided), Bravery 52.8%, Artillery Command 51.8%, the rest 50.6-51.6%.
-- Formations: overall 47.5-51.4% when forced and 47.2-53.8% when AI-picked. All are under 55%. Counter matchups win 68-75%.
+- Formations (v1.4): overall 48.0-51.3% when forced and 46.0-52.5% when AI-picked. All are under 55%. Counter matchups win 70.8-74.1%.
 - Compositions: 47-54% overall. Stances: 47-53%.
 - Messenger: smart rally vs none 59%. Smart vs blind (both sending) 53%.
 - Breeding: about 90% of children within ±6 of the midparent. Carrier × carrier shows a recessive 24.2% of the time. A homozygous founder bred to random mates: the child shows it 28.5%, grandchild 16.6%, gen 5 5.5%. In 20% of lines the trait skips the child and reappears within 5 generations.
 - Battles last 8.5 ticks on average. Draws are about 0.9%.
-- Scenarios (§21, `prototype/scenarios_final.py`, 24,000 seeded runs each): Hold the Fort (walls ×0.68) defender wins **47.5%** (target 47%, band 44-50%), **40.5%** with an officer 10 points weaker. Last Stand (walls ×0.735) **34.6%** (target 35%, band 32-38%), **29.2%** with an officer 10 points weaker. The prototype does not simulate messengers in scenarios, and the player's garrison is a random legal 10-point army, so real players who build well will do somewhat better; QA S1-S2 re-measure it in the engine.
+- Scenarios (§21, `prototype/scenarios_final.py`, 24,000 seeded runs each): Hold the Fort (walls ×0.68) defender wins **46.5%** (v1.4; v1.3 47.5%; target 47%, band 44-50%), **39.8%** with an officer 10 points weaker. Last Stand (walls ×0.735) **33.9%** (v1.4; v1.3 34.6%; target 35%, band 32-38%), **28.4%** with an officer 10 points weaker. The prototype does not simulate messengers in scenarios, and the player's garrison is a random legal 10-point army, so real players who build well will do somewhat better; QA S1-S2 re-measure it in the engine.
 
 ## 20. Explicitly out of V1
 Chain of command (officers under officers), PvP, world map, Foxhole/EU4 layering, officer age/death/retirement, schools, equipment, weather, attacker/defender sides on normal maps (D6, deferred; §12; only the scenario maps in §21 have sides). Plug-in points: `resolve_battle` is pure and versioned (`log.v`), armies are plain dictionaries, and terrain is an id plus a table.
@@ -711,4 +738,4 @@ None of these is in V1, and none changes a V1 number. The reasoning and test num
 - **Paper vs field strength:** units arrive under strength after campaigning (shared-war layer).
 - **Real fort and siege odds (3:1 and more):** for sieges on the world map or in a DLC, where the attacker isn't limited by a rank budget.
 - **A cannon cap** (e.g. at most 1 gun section per 3 infantry companies): tested and declined for V1, because it pushed formation results out of their bands (Wide Line 44.2%, Pincer 56.0%, +20 officer 65.7%). It would need a re-tune. The Gun Section label covers the history.
-- **The Attack Column > Pincer strength** (×1.10 / ×0.91 for that one pair) is **awaiting the captain**; v1.3 keeps ×1.07 / ×0.94 (D2).
+- **The Attack Column > Pincer strength** (×1.10 / ×0.91 for that one pair): optional since v1.4, because B5 now passes with ×1.07 / ×0.94 after the Column fire fix (§11.2, `decisions.md` D2). The captain can still choose it.

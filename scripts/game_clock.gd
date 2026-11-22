@@ -7,6 +7,7 @@ extends RefCounted
 ## offset is 0. day_index never goes backwards on an account.
 
 const Civil = preload("res://scripts/civil_time.gd")
+const Records = preload("res://scripts/records.gd")
 
 var net_state := "offline"
 var server_unix := 0
@@ -80,12 +81,16 @@ func to_record() -> Dictionary:
 	}
 
 
-func load_record(rec: Dictionary) -> void:
+func load_record(rec: Dictionary) -> bool:
+	if not rec.has("v") or int(rec["v"]) != Records.SAVE_VERSION:
+		push_error("clock record v is missing or not %s" % str(Records.SAVE_VERSION))
+		return false
 	net_state = str(rec.get("net_state", "offline"))
 	offset_sec = int(rec.get("offset_sec", 0))
 	has_synced = bool(rec.get("has_synced", false))
 	has_day = bool(rec.get("has_day", false))
 	highest_day = int(rec.get("highest_day", 0))
+	return true
 
 
 static func roll_account_day(account: Dictionary, clock: RefCounted) -> bool:
