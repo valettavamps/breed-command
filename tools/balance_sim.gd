@@ -945,8 +945,8 @@ func _run_b1() -> Dictionary:
 			print("B1 ", i)
 		var log_a = _random_log(resolver, "B1", i, null)
 		var log_b = _random_log(resolver, "B1", i, null)
-		var ha := HashUtil.sha256_text(JSON.stringify(log_a))
-		var hb := HashUtil.sha256_text(JSON.stringify(log_b))
+		var ha := HashUtil.sha256_text(HashUtil.json_text(log_a))
+		var hb := HashUtil.sha256_text(HashUtil.json_text(log_b))
 		if ha != hb:
 			bad += 1
 		if i < fix_n:
@@ -1052,14 +1052,14 @@ func _run_s6() -> Dictionary:
 			print("S6 ", i)
 		var left = _random_log(resolver, "S6", i, null)
 		var right = _random_log(resolver_b, "S6", i, null)
-		var hl := HashUtil.sha256_text(JSON.stringify(left))
-		var hr := HashUtil.sha256_text(JSON.stringify(right))
+		var hl := HashUtil.sha256_text(HashUtil.json_text(left))
+		var hr := HashUtil.sha256_text(HashUtil.json_text(right))
 		if hl != hr:
 			mismatch += 1
 	var scen = data.parsed["scenarios"]["scenarios"]["hold_the_fort"]
 	var plain = _random_log(resolver, "S6", 0, null)
 	var fort = _random_log(resolver, "S6", 0, scen)
-	var live := HashUtil.sha256_text(JSON.stringify(plain)) != HashUtil.sha256_text(JSON.stringify(fort))
+	var live := HashUtil.sha256_text(HashUtil.json_text(plain)) != HashUtil.sha256_text(HashUtil.json_text(fort))
 	var ok := mismatch == 0 and live
 	return _pack("S6", "scenario_null_logs_identical", {"mismatches": mismatch, "modifier_changes_log": live}, {"mismatches": 0, "plumbing": true}, ok, n)
 

@@ -59,3 +59,10 @@ static func sha1_text(text: String) -> String:
 	ctx.start(HashingContext.HASH_SHA1)
 	ctx.update(text.to_utf8_buffer())
 	return hex_bytes(ctx.finish())
+
+
+# full_precision is Grisu2, integer-only. The default printer calls libm log10
+# and snprintf, and UCRT disagrees with glibc on the last digits. That changed
+# 73 of 1,000 B1 log hashes on Windows while the battle math matched.
+static func json_text(value) -> String:
+	return JSON.stringify(value, "", true, true)

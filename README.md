@@ -64,7 +64,8 @@ Where the spec is silent, the Python prototype in the spec folder (not copied in
 - Officer generation for the harness follows the prototype reading of sim-plan §1: one `randint(35, 55)` plus an independent normal per visible stat, hidden stats `randint(30, 70)`, no traits unless the check adds one.
 - Setup RNG and battle RNG are separate generators seeded with the same trial seed.
 - `hash32` is FNV-1a 32-bit. The spec names the function and does not define the mix.
-- `ln`, `exp`, and `cos` go through `scripts/portable_math.gd`. Windows libm and glibc disagreed in the last bits and that changed 73 of 1,000 B1 logs. The series is only arithmetic, so the three operating systems share it.
+- `ln`, `exp`, and `cos` go through `scripts/portable_math.gd`. The series is only arithmetic.
+- Log hashes and `inputs_hash` use `JSON.stringify` with full precision (Grisu2). The default printer calls `log10` and `snprintf`. On the previous SHA that printer, not the battle math, was what made 73 of 1,000 Windows B1 logs differ from Linux and macOS.
 
 ## Bands the current math misses
 
