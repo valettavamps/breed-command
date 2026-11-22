@@ -65,10 +65,12 @@ jobs:
         run: '"${GODOT_BIN}" --headless --path . --quit-after 1 --script res://tools/balance_sim.gd -- --suite ac2 --master-seed 20261122'
 
       - name: CLK
+        if: ${{ !cancelled() }}
         shell: bash
         run: '"${GODOT_BIN}" --headless --path . --quit-after 1 --script res://tools/balance_sim.gd -- --suite CLK --master-seed 20261122'
 
       - name: AC-6 E7
+        if: ${{ !cancelled() }}
         shell: bash
         run: '"${GODOT_BIN}" --headless --path . --quit-after 1 --script res://tools/balance_sim.gd -- --suite ac6 --master-seed 20261122'
 
