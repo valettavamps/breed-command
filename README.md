@@ -35,6 +35,12 @@ There is no networking code. A future Steamworks addon, if added, belongs under 
 
 `CLK`: day boundary, local clock ignored while synced, offline offset kept, day index never rewinds, never-synced offset 0, and the flag parser. Fixture `CLK@20261122@<SHA>`.
 
+`ac6`: scored E7 only. Fixture `E7@20261122@<SHA>`. The loader also asserts the same equality at startup.
+
+```bash
+godot --headless --path . --quit-after 1 --script res://tools/balance_sim.gd -- --suite ac6 --master-seed 20261122
+```
+
 Headline win rates use 20,000 trials. Matrix cells use 4,000. B14 uses 20,000 because the non-battle band is one point wide. Seeds are `hash32(master, check id, trial)` with FNV-1a over `master|check|trial`.
 
 ## Resolver notes
@@ -56,5 +62,13 @@ Where the spec is silent, the Python prototype in the spec folder (not copied in
 - A visible trait is “non-battle” for B14 when every effect key is one of `training_mult`, `wisdom_gain_mult`, `messenger_delay_add`, `auto_reserve_delay_add`, `auto_reserve_tick_override`. Hesitant is non-battle in the no-messenger, no-reserve setup. Glory Seeker is a battle weakness because it also moves the rout threshold.
 - Archetype armies use `battle.ai_general` shares: floor the point share, floor-divide by cost, leftover points to `infantry`.
 - Officer generation for the harness follows the prototype reading of sim-plan §1: one `randint(35, 55)` plus an independent normal per visible stat, hidden stats `randint(30, 70)`, no traits unless the check adds one.
+
+## Bands the current math misses
+
+These were checked against the v1.3 Python prototype. They are not Godot-only. Data was not changed.
+
+- **B5 Column > Pincer.** Godot 35.8% countered. The prototype's own matrix on this data is 36.4%. Spec §11.1 and §15 keep ×1.07/×0.94. The published 22–31% pair band does not hold for this pair at a stable sample.
+- **B14 Steady Under Shot.** Godot 60.6%. The prototype's 50.4% never applies `morale_loss_from_cannon_mult` (cannon casualties are computed and then ignored). Adding the spec §6.1 ×0.75 split to the prototype measures about 62%. Spec §6.1 supports applying it.
+- **B15.** Hidden traits were not in the prototype. A prototype with the §6.3 effects measures Lion's Heart ~81%, Cool Under Fire ~63%, Panic-Prone ~25%, Shaken by Guns ~38%, matching Godot. Reveal rates sit above 60% because the spec triggers (first casualties, distance below 4, tick 8, morale below 30 or 35) fire in most battles.
 - Setup RNG and battle RNG are separate generators seeded with the same trial seed.
 - `hash32` is FNV-1a 32-bit. The spec names the function and does not define the mix.

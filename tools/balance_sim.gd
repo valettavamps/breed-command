@@ -64,6 +64,8 @@ func _main() -> int:
 		return _finish("ac2", _build_ac2())
 	if suite == "CLK":
 		return _finish("CLK", [_run_clk()])
+	if suite == "ac6":
+		return _finish("ac6", [_run_e7()])
 	if suite == "all":
 		var checks: Array = []
 		checks.append_array(_build_ac1())
