@@ -1,0 +1,54 @@
+{
+  "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
+  "version": "1.3",
+  "stances": {
+    "aggressive": {
+      "name": "Aggressive",
+      "advance": 1.0,
+      "hold_at_distance": null,
+      "fire_mult": 1.0,
+      "melee_mult": 1.04,
+      "damage_taken_mult": 1.08,
+      "rout_threshold_add": -3,
+      "auto_reserve_tick": 4,
+      "ai_bias": {
+        "wide_line": 0.0,
+        "tight_wedge": 0.15,
+        "pincer": 0.1,
+        "defensive_screen": -0.15
+      }
+    },
+    "balanced": {
+      "name": "Balanced",
+      "advance": 0.75,
+      "hold_at_distance": null,
+      "fire_mult": 1.0,
+      "melee_mult": 1.0,
+      "damage_taken_mult": 1.0,
+      "rout_threshold_add": 0,
+      "auto_reserve_tick": 6,
+      "ai_bias": {
+        "wide_line": 0.0,
+        "tight_wedge": 0.0,
+        "pincer": 0.0,
+        "defensive_screen": 0.0
+      }
+    },
+    "cautious": {
+      "name": "Cautious",
+      "advance": 0.5,
+      "hold_at_distance": 2.0,
+      "fire_mult": 1.06,
+      "melee_mult": 0.95,
+      "damage_taken_mult": 0.94,
+      "rout_threshold_add": 3,
+      "auto_reserve_tick": 8,
+      "ai_bias": {
+        "wide_line": 0.1,
+        "tight_wedge": -0.15,
+        "pincer": 0.0,
+        "defensive_screen": 0.15
+      }
+    }
+  }
+}

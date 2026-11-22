@@ -1,0 +1,108 @@
+name: balance-sim
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  sim:
+    name: sim (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Godot 4.7.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          VER="4.7.2"
+          ROOT="${RUNNER_TEMP}/godot-bin"
+          mkdir -p "${ROOT}"
+          if [ "${RUNNER_OS}" = "Linux" ]; then
+            URL="https://github.com/godotengine/godot/releases/download/${VER}-stable/Godot_v${VER}-stable_linux.x86_64.zip"
+          elif [ "${RUNNER_OS}" = "Windows" ]; then
+            URL="https://github.com/godotengine/godot/releases/download/${VER}-stable/Godot_v${VER}-stable_win64.exe.zip"
+          else
+            URL="https://github.com/godotengine/godot/releases/download/${VER}-stable/Godot_v${VER}-stable_macos.universal.zip"
+          fi
+          curl -fsSL -o "${ROOT}/godot.zip" "${URL}"
+          PYBIN=python3
+          command -v python3 >/dev/null 2>&1 || PYBIN=python
+          "${PYBIN}" - "${ROOT}/godot.zip" "${ROOT}/unpack" << 'PY'
+          import sys, zipfile
+          from pathlib import Path
+          dest = Path(sys.argv[2])
+          dest.mkdir(parents=True, exist_ok=True)
+          with zipfile.ZipFile(sys.argv[1]) as zf:
+              zf.extractall(dest)
+          PY
+          if [ "${RUNNER_OS}" = "Linux" ]; then
+            BIN="$(find "${ROOT}/unpack" -type f -name 'Godot_v*-stable_linux.x86_64' | head -n 1)"
+          elif [ "${RUNNER_OS}" = "Windows" ]; then
+            BIN="$(find "${ROOT}/unpack" -type f -name '*console*.exe' | head -n 1)"
+            if [ -z "${BIN}" ]; then
+              BIN="$(find "${ROOT}/unpack" -type f -name '*.exe' | head -n 1)"
+            fi
+          else
+            BIN="$(find "${ROOT}/unpack" -type f -path '*/MacOS/Godot' | head -n 1)"
+            chmod +x "${BIN}" || true
+          fi
+          chmod +x "${BIN}" || true
+          echo "GODOT_BIN=${BIN}" >> "${GITHUB_ENV}"
+          "${BIN}" --version
+
+      - name: AC-1
+        shell: bash
+        run: '"${GODOT_BIN}" --headless --path . --quit-after 1 --script res://tools/balance_sim.gd -- --suite ac1 --master-seed 20261122'
+
+      - name: AC-2
+        shell: bash
+        run: '"${GODOT_BIN}" --headless --path . --quit-after 1 --script res://tools/balance_sim.gd -- --suite ac2 --master-seed 20261122'
+
+      - name: CLK
+        shell: bash
+        run: '"${GODOT_BIN}" --headless --path . --quit-after 1 --script res://tools/balance_sim.gd -- --suite CLK --master-seed 20261122'
+
+      - name: Upload sim_out
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sim-out-${{ matrix.os }}
+          path: sim_out/
+          if-no-files-found: error
+
+  compare-b1:
+    name: B1 byte-identical across OS
+    needs: sim
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: sim-out-*
+          merge-multiple: false
+
+      - name: Compare ac1.json (contains B1 fixtures)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - << 'PY'
+          import pathlib, sys
+          roots = sorted(pathlib.Path(".").glob("sim-out-*"))
+          files = {p.name: (p / "ac1.json").read_bytes() for p in roots}
+          names = list(files)
+          print("compared", names, "bytes", [len(files[n]) for n in names])
+          base = names[0]
+          ok = True
+          for name in names[1:]:
+              if files[name] != files[base]:
+                  print("MISMATCH", base, name)
+                  ok = False
+              else:
+                  print("MATCH", base, name)
+          sys.exit(0 if ok else 1)
+          PY

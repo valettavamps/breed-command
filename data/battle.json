@@ -1,0 +1,116 @@
+{
+  "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
+  "version": "1.3",
+  "balance_targets": {
+    "_note": "Decided by captain 2026-11-22. QA checks in sim-plan.md.",
+    "D2_countered_formation_win_rate": {
+      "target": [
+        0.24,
+        0.29
+      ],
+      "qa_fail_outside": [
+        0.22,
+        0.31
+      ],
+      "check": "B5"
+    },
+    "D3_officer_edge_plus20_win_rate": {
+      "target": 0.64,
+      "qa_band": [
+        0.6,
+        0.65
+      ],
+      "check": "B2"
+    },
+    "D3_single_stat_plus20_max_win_rate": {
+      "max": 0.56,
+      "strongest_skill_must_be": "leadership",
+      "check": "B3"
+    }
+  },
+  "max_ticks": 20,
+  "start_distance": 6.0,
+  "distance_unit": "100 paces",
+  "damage_variance": {
+    "distribution": "uniform",
+    "min": 0.75,
+    "max": 1.25,
+    "rolled": "once per side per tick"
+  },
+  "morale": {
+    "loss_per_pct_troops_lost": 0.75,
+    "melee_casualty_extra_weight": 0.25,
+    "regen_when_untouched_base": 0.5,
+    "cap": 100,
+    "min": 0
+  },
+  "rout": {
+    "base_threshold": 25,
+    "eliminated_below_fraction_of_start": 0.25
+  },
+  "timeout": {
+    "score": "0.5*troops_remaining/troops_start + 0.5*morale/100",
+    "draw_margin": 0.02
+  },
+  "double_rout": "side with larger (morale - rout_threshold) wins; equal is a draw",
+  "pursuit": {
+    "winner_cavalry_melee_mult": 0.5,
+    "affects_result": false
+  },
+  "unit_speed_use": "Armies move as one formation (advance comes from stance + formation + terrain). Unit speed is used only to order narration and for pursuit flavour in V1.",
+  "ai_general": {
+    "_note": "Opponent army for V1 ranked battles (PvE).",
+    "composition_archetypes": {
+      "line": {
+        "infantry": 1.0,
+        "cavalry": 0.0,
+        "cannon": 0.0
+      },
+      "mixed": {
+        "infantry": 0.45,
+        "cavalry": 0.15,
+        "cannon": 0.4
+      },
+      "horse": {
+        "infantry": 0.3,
+        "cavalry": 0.7,
+        "cannon": 0.0
+      },
+      "guns": {
+        "infantry": 0.35,
+        "cavalry": 0.0,
+        "cannon": 0.65
+      },
+      "foot_and_horse": {
+        "infantry": 0.6,
+        "cavalry": 0.4,
+        "cannon": 0.0
+      },
+      "combined": {
+        "infantry": 0.35,
+        "cavalry": 0.4,
+        "cannon": 0.25
+      }
+    },
+    "archetype_shares_are": "share of point budget; round down per type, leftover points go to infantry",
+    "archetype_pick": "uniform random from battle seed",
+    "stance_pick": "uniform random",
+    "reserve_fraction": 0.2,
+    "messenger": {
+      "standing_order": {
+        "action": "rally",
+        "condition": "morale_below",
+        "value": 45
+      },
+      "live_send_tick": null
+    }
+  },
+  "rng": {
+    "algorithm": "PCG32 (Godot RandomNumberGenerator) seeded with battle seed",
+    "draw_order": [
+      "A formation noise x4",
+      "B formation noise x4",
+      "per tick: A damage variance, B damage variance, A temperament noise, B temperament noise"
+    ]
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
+  "version": "1.3",
+  "ranks": [
+    {
+      "id": "lieutenant",
+      "name": "Lieutenant",
+      "order": 1,
+      "command_size": "about a battalion (up to ~1,000 men)",
+      "point_budget": 10,
+      "promote_to_next": {
+        "battles": 5,
+        "wins": 2,
+        "wisdom": 0
+      }
+    },
+    {
+      "id": "captain",
+      "name": "Captain",
+      "order": 2,
+      "command_size": "a strong battalion (up to ~1,200 men)",
+      "point_budget": 12,
+      "promote_to_next": {
+        "battles": 15,
+        "wins": 7,
+        "wisdom": 35
+      }
+    },
+    {
+      "id": "major",
+      "name": "Major",
+      "order": 3,
+      "command_size": "two battalions, a small regiment (up to ~1,400 men)",
+      "point_budget": 14,
+      "promote_to_next": {
+        "battles": 30,
+        "wins": 14,
+        "wisdom": 45
+      }
+    },
+    {
+      "id": "lieutenant_colonel",
+      "name": "Lieutenant Colonel",
+      "order": 4,
+      "command_size": "a regiment (up to ~1,600 men)",
+      "point_budget": 16,
+      "promote_to_next": {
+        "battles": 50,
+        "wins": 24,
+        "wisdom": 55
+      }
+    },
+    {
+      "id": "colonel",
+      "name": "Colonel",
+      "order": 5,
+      "command_size": "a large regiment (up to ~1,800 men)",
+      "point_budget": 18,
+      "promote_to_next": {
+        "battles": 80,
+        "wins": 40,
+        "wisdom": 65
+      }
+    },
+    {
+      "id": "general",
+      "name": "General",
+      "order": 6,
+      "command_size": "about a brigade (up to ~2,000 men)",
+      "point_budget": 20,
+      "promote_to_next": null
+    }
+  ],
+  "command_size_note": "display text only (v1.3): men = the budget spent on infantry at 100 per company; cavalry and gun sections field fewer men per point. Budgets are a gameplay choice and unchanged; history grew 3-10x per rank (historian-assessment.md).",
+  "rules": {
+    "counts_are_lifetime_totals": true,
+    "skirmish_battles_count": false,
+    "demotion": false,
+    "reserve_max_fraction_of_budget": 0.3,
+    "opponent": {
+      "same_rank": true,
+      "same_budget": true,
+      "officer_offset": {
+        "distribution": "uniform",
+        "min": -10,
+        "max": 10,
+        "applies_to": "every innate attribute, wisdom and skill"
+      }
+    }
+  }
+}

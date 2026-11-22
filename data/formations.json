@@ -1,0 +1,124 @@
+{
+  "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
+  "version": "1.3",
+  "id_policy": "ids (dictionary keys and every 'id' value) are stable and never renamed; 'name' is the display string and may change between versions; 'legacy_names' lists earlier display strings so saves, logs and text can be matched. Code must key on ids, never on names. v1.3: formation id tight_wedge is kept; its display name is now Attack Column.",
+  "status": "Counter strength D2 DECIDED 2026-11-22 (captain): winner x1.07, loser x0.94; countered side should win 24-29% (QA B5).",
+  "cycle": "Attack Column > Pincer > Wide Line > Defensive Screen > Attack Column (diagonals neutral)",
+  "counter_reasons": {
+    "_note": "display text only (v1.3, historian-assessment.md): shown on the formation card and the replay's formation panel; no new log event. Keys are <winner id>><loser id>. The numbers are in matchup_damage_mult.",
+    "tight_wedge>pincer": "The column punches through a centre the enemy thinned to reach round the flanks (Austerlitz 1805, Blenheim 1704).",
+    "pincer>wide_line": "The flank attack rolls up a long line where it is weakest, at its open end (Leuthen 1757, Cowpens 1781).",
+    "wide_line>defensive_screen": "A dense, braced defence is a big target: the wider line overlaps it and pours musketry into it from front and sides.",
+    "defensive_screen>tight_wedge": "Steady troops waiting behind a skirmish screen break an assault column as it comes on (Bussaco 1810)."
+  },
+  "beats": {
+    "tight_wedge": "pincer",
+    "pincer": "wide_line",
+    "wide_line": "defensive_screen",
+    "defensive_screen": "tight_wedge"
+  },
+  "matchup_damage_mult": {
+    "wide_line": {
+      "wide_line": 1.0,
+      "tight_wedge": 1.0,
+      "pincer": 0.94,
+      "defensive_screen": 1.07
+    },
+    "tight_wedge": {
+      "wide_line": 1.0,
+      "tight_wedge": 1.0,
+      "pincer": 1.07,
+      "defensive_screen": 0.94
+    },
+    "pincer": {
+      "wide_line": 1.07,
+      "tight_wedge": 0.94,
+      "pincer": 1.0,
+      "defensive_screen": 1.0
+    },
+    "defensive_screen": {
+      "wide_line": 0.94,
+      "tight_wedge": 1.07,
+      "pincer": 1.0,
+      "defensive_screen": 1.0
+    }
+  },
+  "_matchup_note": "matchup_damage_mult[mine][theirs] multiplies ALL damage my army deals.",
+  "formations": {
+    "wide_line": {
+      "name": "Wide Line",
+      "short_name": "Line",
+      "fire_mult": 1.08,
+      "melee_mult": 0.92,
+      "damage_taken_mult": 1.0,
+      "advance_add": 0.0,
+      "start_morale_add": 0
+    },
+    "tight_wedge": {
+      "name": "Attack Column",
+      "short_name": "Column",
+      "legacy_names": [
+        "Tight Wedge"
+      ],
+      "fire_mult": 0.92,
+      "melee_mult": 1.12,
+      "damage_taken_mult": 1.03,
+      "advance_add": 0.25,
+      "start_morale_add": 0
+    },
+    "pincer": {
+      "name": "Pincer",
+      "short_name": "Pincer",
+      "fire_mult": 1.0,
+      "melee_mult": 1.06,
+      "damage_taken_mult": 1.0,
+      "advance_add": 0.0,
+      "start_morale_add": 0,
+      "unit_melee_mult": {
+        "cavalry": 1.03
+      }
+    },
+    "defensive_screen": {
+      "name": "Defensive Screen",
+      "short_name": "Screen",
+      "fire_mult": 0.98,
+      "melee_mult": 0.96,
+      "damage_taken_mult": 0.97,
+      "advance_add": -0.25,
+      "start_morale_add": 0
+    }
+  },
+  "ai": {
+    "composition_fit": {
+      "wide_line": {
+        "infantry": 0.3,
+        "cavalry": 0.0,
+        "cannon": 0.2
+      },
+      "tight_wedge": {
+        "infantry": 0.1,
+        "cavalry": 0.4,
+        "cannon": 0.0
+      },
+      "pincer": {
+        "infantry": 0.15,
+        "cavalry": 0.3,
+        "cannon": 0.05
+      },
+      "defensive_screen": {
+        "infantry": 0.1,
+        "cavalry": 0.0,
+        "cannon": 0.35
+      }
+    },
+    "terrain_fit_weight": 2.0,
+    "counter_weight": 5.0,
+    "enemy_prediction_temperature": 0.15,
+    "noise": {
+      "type": "gumbel",
+      "base": 0.03,
+      "insight_scaled": 0.22
+    },
+    "insight": "(0.5*battlefield_theory + 0.3*wisdom + 0.2*intelligence)/100 + trait ai_insight_bonus, clamped 0..1"
+  }
+}

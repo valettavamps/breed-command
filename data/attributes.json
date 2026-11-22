@@ -1,0 +1,178 @@
+{
+  "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
+  "version": "1.3",
+  "innate": {
+    "ids": [
+      "intelligence",
+      "athleticism",
+      "adaptability",
+      "bravery",
+      "natural_affinity"
+    ],
+    "short": {
+      "intelligence": "INT",
+      "athleticism": "ATH",
+      "adaptability": "ADA",
+      "bravery": "BRV",
+      "natural_affinity": "NAF"
+    },
+    "min": 1,
+    "hard_cap": 99,
+    "soft_cap": 80,
+    "new_officer": {
+      "distribution": "normal_clamped",
+      "mean": 40,
+      "sd": 9,
+      "min": 20,
+      "max": 60
+    },
+    "soft_cap_compression": 0.4,
+    "battle_growth": {
+      "rolls_per_battle": 1,
+      "amount": 1,
+      "chance_by_current_value": [
+        {
+          "below": 80,
+          "chance": 0.3
+        },
+        {
+          "below": 90,
+          "chance": 0.06
+        },
+        {
+          "below": 99,
+          "chance": 0.02
+        },
+        {
+          "below": 100,
+          "chance": 0.0
+        }
+      ]
+    },
+    "battle_effects": {
+      "intelligence": {
+        "wisdom_gain": "see wisdom",
+        "ai_insight_weight": 0.2
+      },
+      "athleticism": {
+        "melee_mult_per_point_over_50": 0.0006
+      },
+      "adaptability": {
+        "terrain_penalty_scale_per_point_over_50": -0.003
+      },
+      "bravery": {
+        "visible_weight_in_effective_bravery": 0.5
+      },
+      "natural_affinity": {
+        "training_aptitude_weight": 0.25
+      }
+    }
+  },
+  "wisdom": {
+    "start_mult_of_intelligence": 0.5,
+    "base_gain": 1.0,
+    "gain_per_intelligence_point": 0.02,
+    "cap_base": 60,
+    "cap_per_intelligence_point": 0.4,
+    "cap_formula": "min(99, 60 + 0.4*INT)",
+    "outcome_mult": {
+      "win": 1.0,
+      "draw": 1.0,
+      "loss": 1.25
+    },
+    "hard_cap": 99,
+    "battle_effects": {
+      "damage_mult_per_point_over_50": 0.001,
+      "ai_insight_weight": 0.3
+    }
+  },
+  "effective_bravery": {
+    "formula": "0.5*bravery + 0.5*hidden_bravery",
+    "morale_loss_scale_per_point_over_50": -0.001,
+    "rout_threshold_shift_per_point_over_50": -0.03
+  },
+  "hidden": {
+    "ids": [
+      "inspiration",
+      "aggression",
+      "temperament",
+      "hidden_bravery"
+    ],
+    "min": 1,
+    "max": 99,
+    "new_officer": {
+      "distribution": "normal_clamped",
+      "mean": 50,
+      "sd": 15,
+      "min": 1,
+      "max": 99
+    },
+    "reveal": {
+      "bands": [
+        {
+          "label": "Low",
+          "max": 34
+        },
+        {
+          "label": "Average",
+          "max": 65
+        },
+        {
+          "label": "High",
+          "max": 99
+        }
+      ],
+      "events_for_band": 1,
+      "events_for_exact": 5,
+      "triggers": {
+        "inspiration": "messenger_rally_or_morale_recovery",
+        "aggression": "formation_chosen_wedge_or_pincer_or_melee_start",
+        "temperament": "side_lost_25pct_troops",
+        "hidden_bravery": "morale_below_40"
+      }
+    },
+    "battle_effects": {
+      "inspiration": {
+        "rally_mult_base": 0.75,
+        "rally_mult_per_point": 0.005,
+        "morale_regen_per_tick_per_point_over_50": 0.02
+      },
+      "aggression": {
+        "ai_bias_per_point_over_50": {
+          "wide_line": 0.0,
+          "tight_wedge": 0.004,
+          "pincer": 0.002,
+          "defensive_screen": -0.004
+        },
+        "melee_mult_per_point_over_50": 0.001,
+        "damage_taken_mult_per_point_over_50": 0.001
+      },
+      "temperament": {
+        "morale_loss_noise_at_0": 0.3,
+        "morale_loss_noise_at_99": 0.0,
+        "ai_noise_per_point_under_50": 0.001
+      },
+      "hidden_bravery": {
+        "visible_weight_in_effective_bravery": 0.5
+      }
+    }
+  },
+  "officer_rating": {
+    "_note": "Display-only summary; battle math never reads it. 'A +20 officer edge' in sim-plan means every innate attribute, Wisdom and every skill is +20.",
+    "formula": "mean(INT,ATH,ADA,BRV,NAF,Wisdom, six skills)",
+    "components": [
+      "intelligence",
+      "athleticism",
+      "adaptability",
+      "bravery",
+      "natural_affinity",
+      "wisdom",
+      "horsemanship",
+      "marksmanship",
+      "bayonet_drill",
+      "artillery_command",
+      "battlefield_theory",
+      "leadership"
+    ]
+  }
+}

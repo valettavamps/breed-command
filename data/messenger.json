@@ -1,0 +1,102 @@
+{
+  "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
+  "version": "1.3",
+  "status": "D1 DECIDED 2026-11-22 (captain): live click during first viewing + optional standing order",
+  "per_battle": 1,
+  "delay_ticks": 1,
+  "earliest_send_tick": 1,
+  "latest_send_tick": 19,
+  "rally_status": "D8 DECIDED 2026-11-22 (captain): rally stays at 12%; UI and narration state the gain and the 2-turn steadiness explicitly (narration.json rally, rally_ui_label)",
+  "actions": {
+    "rally": {
+      "restore_lost_morale_frac": 0.12,
+      "mult": "0.75 + 0.005*inspiration",
+      "morale_loss_mult": 0.9,
+      "duration_ticks": 2,
+      "cap_morale": 100,
+      "lost_morale_measured_from": "starting morale"
+    },
+    "commit_reserves": {
+      "fresh_morale_add": 0,
+      "reserve_damage_mult": 1.1,
+      "applies_to": "whole army (flank attack)",
+      "duration_ticks": 2,
+      "requires_uncommitted_reserves": true
+    }
+  },
+  "battle_input": {
+    "_note": "Part of each army's input to the pure resolver. Both fields optional.",
+    "shape": {
+      "standing_order": "{action, condition, value} or null",
+      "live_send_tick": "int 1..19 or null",
+      "live_action": "rally|commit_reserves (required if live_send_tick set)"
+    }
+  },
+  "standing_order": {
+    "conditions": {
+      "morale_below": {
+        "meaning": "own morale < value",
+        "min": 20,
+        "max": 80,
+        "step": 5,
+        "default": 45
+      },
+      "strength_below_pct": {
+        "meaning": "own strength (front+reserve) < value% of starting strength",
+        "min": 30,
+        "max": 90,
+        "step": 5,
+        "default": 60
+      },
+      "enemy_morale_below": {
+        "meaning": "enemy morale < value (press the advantage)",
+        "min": 20,
+        "max": 80,
+        "step": 5,
+        "default": 40
+      },
+      "tick_reached": {
+        "meaning": "tick index >= value",
+        "min": 1,
+        "max": 19,
+        "step": 1,
+        "default": 4
+      }
+    },
+    "evaluated": "end of each tick, after the rout check, only if neither side routed; condition uses post-tick state",
+    "send_tick": "the tick whose end-of-tick check first passes",
+    "one_condition_per_order": true,
+    "ui_default_for_new_players": {
+      "action": "rally",
+      "condition": "morale_below",
+      "value": 45
+    }
+  },
+  "live_click": {
+    "allowed": "only during the FIRST viewing of a ranked battle, while the messenger is unsent and the battle is undecided at the tick being shown",
+    "maps_to": "live_send_tick = index of the tick currently displayed when clicked (the order counts as sent at the end of that tick)",
+    "rerun": "client re-runs resolve_battle with the same seed and live_send_tick set; ticks 1..live_send_tick are identical, so playback continues from the next tick without a jump",
+    "first_viewing_controls": {
+      "pause": true,
+      "speed": [
+        1,
+        2
+      ],
+      "rewind_or_scrub": false,
+      "skip_to_end": "allowed; skipping forfeits any unsent live click (standing order still applies)"
+    },
+    "if_player_quits_mid_viewing": "battle is finalised with live_send_tick as recorded so far (null if never clicked); standing order still applies",
+    "battle_counts_toward_daily_limit": "when first viewing starts (quitting does not refund it)"
+  },
+  "conflict_rule": "One messenger only. If both a standing order and a live click exist, the one with the earlier send_tick is used and the other is cancelled (logged standing_order_cancelled / live_click_ignored). Same tick: the live click wins. Once the messenger has been sent, the button is disabled.",
+  "rewatch": "After first viewing ends, the battle record stores the final inputs (armies incl. messenger fields, terrain, seed) and the log. Re-watches replay that log; the messenger is fixed and cannot be changed or added. Replays and shared links always re-derive the identical log from the stored inputs.",
+  "auto_reserves": {
+    "_note": "If reserves are still waiting, the officer commits them himself at the stance's auto_reserve_tick or when morale drops below the threshold, with no bonus.",
+    "morale_below": 45
+  },
+  "no_effect_cases": [
+    "commit_reserves with no reserves left: messenger wasted, logged",
+    "an order whose arrival tick comes after the battle ended: never arrives, logged as messenger_lost",
+    "rally when side already routed: not possible"
+  ]
+}

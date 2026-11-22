@@ -1,0 +1,4 @@
+.godot/
+sim_out/
+*.translation
+.import/

@@ -1,0 +1,105 @@
+{
+  "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
+  "version": "1.3",
+  "id_policy": "ids (dictionary keys and every 'id' value) are stable and never renamed; 'name' is the display string and may change between versions; 'legacy_names' lists earlier display strings so saves, logs and text can be matched. Code must key on ids, never on names.",
+  "units": {
+    "infantry": {
+      "name": "Infantry Company",
+      "narration_name": "company",
+      "narration_plural": "companies",
+      "cost": 1,
+      "troops": 100,
+      "toughness": 1.0,
+      "firepower": 6.0,
+      "melee": 6.0,
+      "range": 2.0,
+      "melee_reach": 0.0,
+      "speed": 2,
+      "morale": 60,
+      "exposure": 1.0,
+      "fire_skill": "marksmanship",
+      "melee_skill": "bayonet_drill"
+    },
+    "cavalry": {
+      "name": "Cavalry Squadron",
+      "narration_name": "squadron",
+      "narration_plural": "squadrons",
+      "cost": 2,
+      "troops": 100,
+      "toughness": 1.4,
+      "firepower": 1.0,
+      "melee": 20.0,
+      "range": 1.0,
+      "melee_reach": 1.0,
+      "speed": 4,
+      "morale": 65,
+      "exposure": 1.0,
+      "fire_skill": "horsemanship",
+      "melee_skill": "horsemanship"
+    },
+    "cannon": {
+      "name": "Gun Section (2 guns)",
+      "narration_name": "gun section",
+      "narration_plural": "gun sections",
+      "legacy_names": [
+        "Cannon Battery"
+      ],
+      "display_note": "v1.3: 50 men and 2 guns is a historical gun section, not a 4-6 gun battery (historian-assessment.md); numbers unchanged",
+      "cost": 3,
+      "troops": 50,
+      "toughness": 3.0,
+      "firepower": 25.0,
+      "melee": 1.0,
+      "range": 6.0,
+      "melee_reach": 0.0,
+      "speed": 1,
+      "morale": 55,
+      "exposure": 1.0,
+      "fire_skill": "artillery_command",
+      "melee_skill": "artillery_command"
+    }
+  },
+  "_strength_note": "strength = troops x toughness. Damage is dealt in strength; casualties shown = strength lost / toughness. Morale, elimination and timeout use strength, so a point of any unit type is worth about the same.",
+  "targeting": {
+    "_note": "weight of each enemy unit type as a target = alive troops x exposure x preference",
+    "fire": {
+      "infantry": {
+        "infantry": 1.0,
+        "cavalry": 1.0,
+        "cannon": 1.0
+      },
+      "cavalry": {
+        "infantry": 1.0,
+        "cavalry": 1.0,
+        "cannon": 1.0
+      },
+      "cannon": {
+        "infantry": 1.0,
+        "cavalry": 1.2,
+        "cannon": 0.8
+      }
+    },
+    "melee": {
+      "infantry": {
+        "infantry": 1.0,
+        "cavalry": 1.0,
+        "cannon": 1.5
+      },
+      "cavalry": {
+        "infantry": 1.0,
+        "cavalry": 1.0,
+        "cannon": 1.6
+      },
+      "cannon": {
+        "infantry": 1.0,
+        "cavalry": 1.0,
+        "cannon": 1.0
+      }
+    }
+  },
+  "canister": {
+    "_note": "cannon firing at distance <= 1 uses canister",
+    "max_distance": 1.0,
+    "fire_mult": 1.25
+  }
+}
