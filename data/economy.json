@@ -1,0 +1,66 @@
+{
+  "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
+  "version": "1.4",
+  "status": "D11 DECIDED 2026-11-22 (captain): one-time Steam purchase, no subscription, DLC later under never_sold. D4 and D10 DECIDED the same day.",
+  "business_model": {
+    "type": "buy_to_play",
+    "base_price_usd": 19.99,
+    "platform": "Steam",
+    "subscription": null,
+    "in_game_currency": null,
+    "microtransactions": null
+  },
+  "daily_limits": {
+    "same_for_all_players": true,
+    "ranked_battles_per_day": 3,
+    "ranked_battles_per_officer_per_day": 3,
+    "breeds_per_day": 1,
+    "training_clicks_per_day": 6,
+    "training_clicks_per_officer_per_day": 3,
+    "reset": "00:00 UTC",
+    "reset_status": "D9 DECIDED 2026-11-22 (captain)",
+    "purpose": "pacing for officer progress (D11)",
+    "_mirrors": "breeds_per_day = breeding.limits.breeds_per_day_account; training clicks = skills.training; QA E6 fails if they differ"
+  },
+  "roster_slots": 20,
+  "roster_slots_mirrors": "breeding.roster.cap (D10)",
+  "unlimited_no_progress_modes": {
+    "status": "D4 DECIDED 2026-11-22 (captain)",
+    "modes": [
+      "skirmish_vs_ai",
+      "scenario_replay"
+    ],
+    "writes_to_officer": false,
+    "note": "No XP, Wisdom, skill/attribute growth, rank progress, trait/hidden reveals or breeding-eligibility count. A scenario replay is any scenario play that is not a taken scenario assignment (scenarios.json rules.daily, campaign.json)."
+  },
+  "base_game_includes": [
+    "Unlimited replay archive",
+    "Replay controls: play/pause, 4x speed, scrubbing, per-tick stat overlay",
+    "Default uniforms, banners and portrait frames",
+    "House heraldry editor"
+  ],
+  "dlc_allowed": [
+    "New theatres and terrain packs",
+    "Scenario packs",
+    "Campaigns",
+    "Cosmetics (uniforms, flags, house crests, narrator voices, replay themes)",
+    "Replay studio (slow motion, GIF/MP4 export, share links)"
+  ],
+  "never_sold": [
+    "officers",
+    "bloodlines",
+    "breeds",
+    "traits or trait reveals",
+    "attribute/skill/Wisdom points or boosts",
+    "extra daily ranked battles, breeds or training clicks (timer skips)",
+    "rerolls",
+    "buyer-only formations, units or stances (new ones ship free to all, unlocked through play)",
+    "loot boxes or random paid rolls",
+    "owner-only PvP maps",
+    "crypto/NFT/tokens"
+  ],
+  "purchase_effects_on_numbers": "none: no purchasable item may change any value in attributes, skills, traits, ranks, units, formations, terrain, stances, messenger, breeding, battle or daily_limits (QA E5)",
+  "daily_reset": "00:00 UTC",
+  "daily_reset_status": "D9 DECIDED 2026-11-22 (captain)",
+  "currency": "USD via Steam (one-time purchase and DLC); no in-game currency in V1"
+}

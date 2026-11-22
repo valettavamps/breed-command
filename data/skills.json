@@ -1,0 +1,110 @@
+{
+  "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
+  "version": "1.4",
+  "min": 1,
+  "hard_cap": 99,
+  "skills": {
+    "horsemanship": {
+      "name": "Horsemanship",
+      "primary": "athleticism",
+      "secondary": "bravery",
+      "affects": "cavalry melee and charge"
+    },
+    "marksmanship": {
+      "name": "Marksmanship",
+      "primary": "natural_affinity",
+      "secondary": "adaptability",
+      "affects": "infantry firepower"
+    },
+    "bayonet_drill": {
+      "name": "Bayonet Drill",
+      "primary": "athleticism",
+      "secondary": "bravery",
+      "affects": "infantry melee"
+    },
+    "artillery_command": {
+      "name": "Artillery Command",
+      "primary": "intelligence",
+      "secondary": "natural_affinity",
+      "affects": "cannon firepower"
+    },
+    "battlefield_theory": {
+      "name": "Battlefield Theory",
+      "primary": "intelligence",
+      "secondary": "adaptability",
+      "affects": "officer AI formation choice"
+    },
+    "leadership": {
+      "name": "Leadership",
+      "primary": "bravery",
+      "secondary": "intelligence",
+      "affects": "starting morale and morale loss"
+    }
+  },
+  "starting_value": {
+    "formula": "round(0.25*primary + 0.10*secondary)",
+    "min": 5
+  },
+  "unit_skill_mult_per_point_over_50": 0.001,
+  "leadership": {
+    "start_morale_per_point_over_50": 0.02,
+    "morale_loss_scale_per_point_over_50": -0.0006
+  },
+  "battlefield_theory": {
+    "ai_insight_weight": 0.5
+  },
+  "aptitude": {
+    "base": 0.5,
+    "primary_weight": 0.5,
+    "secondary_weight": 0.25,
+    "natural_affinity_weight": 0.25
+  },
+  "bands": [
+    {
+      "below": 40,
+      "mult": 1.0
+    },
+    {
+      "below": 60,
+      "mult": 0.7
+    },
+    {
+      "below": 80,
+      "mult": 0.4
+    },
+    {
+      "below": 99,
+      "mult": 0.12
+    },
+    {
+      "below": 100,
+      "mult": 0.0
+    }
+  ],
+  "training": {
+    "gain_per_click": 2.0,
+    "clicks_per_day_account": 6,
+    "clicks_per_day_per_officer": 3,
+    "same_for_all_players": true,
+    "reset": "00:00 UTC"
+  },
+  "battle_practice": {
+    "gain_per_battle": 0.6,
+    "skills_always_practised": [
+      "leadership",
+      "battlefield_theory"
+    ],
+    "unit_skills": {
+      "infantry": [
+        "marksmanship",
+        "bayonet_drill"
+      ],
+      "cavalry": [
+        "horsemanship"
+      ],
+      "cannon": [
+        "artillery_command"
+      ]
+    }
+  }
+}

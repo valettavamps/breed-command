@@ -1,0 +1,424 @@
+{
+  "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
+  "version": "1.4",
+  "hidden_trigger_rules": {
+    "_status": "v1.4 (SD-4): written down so the engine and prototype agree",
+    "check_time": "each hidden trigger is checked once per tick, after that side's morale step (spec 15.3 step 4) and before the rout check; a hidden trait fires at most once per battle and is revealed on the tick it fires",
+    "types": {
+      "morale_below": "morale after the morale step < value",
+      "tick_reached": "tick >= value",
+      "distance_below": "distance after movement < value",
+      "first_casualties": "strength lost this tick > 0, and >= value% of the side's starting strength S when value is set (v1.4: optional value)",
+      "cannon_casualties": "strength damage dealt by enemy cannon this tick (before rounding) > 0, and >= value% of S when value is set (v1.4: optional value)"
+    },
+    "effect_timing": {
+      "once_morale_add, restore_lost_morale_frac, rout_threshold_add": "applied at once, before the rout check that tick; rout_threshold_add lasts the rest of the battle",
+      "morale_loss_from_cannon_mult": "applies to the cannon share of morale loss from the trigger tick's own morale step onwards (the trigger is tested on that tick's damage before morale is applied)",
+      "duration_ticks effects (advance_add, damage_taken_mult, casualties_taken_mult)": "active for the next duration_ticks ticks after the trigger tick",
+      "no_morale_loss_ticks": "unused in v1.4"
+    },
+    "cannon_share": "morale loss base (strengthLost + 0.25 x meleeStrengthLost) is multiplied by (1 - s x (1 - m)), where s = enemy cannon strength damage / all enemy strength damage this tick (before rounding) and m = product of morale_loss_from_cannon_mult from visible traits and any fired hidden trait"
+  },
+  "rules": {
+    "visible_strengths": 1,
+    "visible_weaknesses": 1,
+    "hidden_slots": 1,
+    "genetics": "Each officer carries 2 alleles per slot (strength, weakness, hidden). Offspring gets one random allele per slot from each parent. Expressed allele: dominant beats recessive. If both alleles have the same dominance and differ, one is picked by a coin flip at birth (breeding seed) and fixed for life. A recessive shows only when paired with another recessive.",
+    "mutation_chance_per_allele": 0.03,
+    "carrier_visibility": {
+      "status": "D7 DECIDED 2026-11-22 (captain)",
+      "rule": "A carried (unexpressed) allele is shown on an officer's card and in the breeding preview once ANY relative in the recorded pedigree (incl. pedigree ghosts) has expressed that trait. Otherwise it shows as 'unknown allele'."
+    },
+    "new_officer": "both alleles drawn uniformly from the slot's library (hidden slot: 'none' has weight 4, each hidden trait weight 1)",
+    "hidden_none_note": "'none' counts as a dominant allele: it hides recessive hidden traits and coin-flips against dominant ones."
+  },
+  "strengths": [
+    {
+      "id": "iron_nerve",
+      "name": "Iron Nerve",
+      "kind": "strength",
+      "dominance": "dominant",
+      "effect": {
+        "morale_loss_mult": 0.96
+      },
+      "description": "Men hold their nerve around this officer."
+    },
+    {
+      "id": "eagle_eye",
+      "name": "Eagle Eye",
+      "kind": "strength",
+      "dominance": "recessive",
+      "effect": {
+        "fire_mult": {
+          "infantry": 1.05,
+          "cannon": 1.05
+        }
+      },
+      "description": "Picks targets others miss."
+    },
+    {
+      "id": "born_in_the_saddle",
+      "name": "Born in the Saddle",
+      "kind": "strength",
+      "dominance": "dominant",
+      "effect": {
+        "melee_mult": {
+          "cavalry": 1.1
+        }
+      },
+      "description": "Rides before he walks."
+    },
+    {
+      "id": "forest_fox",
+      "name": "Forest Fox",
+      "kind": "strength",
+      "dominance": "recessive",
+      "effect": {
+        "terrain_penalty_scale": {
+          "forest": 0.5
+        }
+      },
+      "description": "Treats the woods like home."
+    },
+    {
+      "id": "high_ground",
+      "name": "High Ground Instinct",
+      "kind": "strength",
+      "dominance": "dominant",
+      "effect": {
+        "terrain_bonus_mult": {
+          "hill": 1.5
+        }
+      },
+      "description": "Always finds the crest."
+    },
+    {
+      "id": "river_warden",
+      "name": "River Warden",
+      "kind": "strength",
+      "dominance": "recessive",
+      "effect": {
+        "terrain_penalty_scale": {
+          "river_crossing": 0.5
+        }
+      },
+      "description": "Knows every ford."
+    },
+    {
+      "id": "drillmaster",
+      "name": "Drillmaster",
+      "kind": "strength",
+      "dominance": "dominant",
+      "effect": {
+        "melee_mult": {
+          "infantry": 1.08
+        }
+      },
+      "description": "Bayonets fixed, ranks closed."
+    },
+    {
+      "id": "gunners_instinct",
+      "name": "Gunner's Instinct",
+      "kind": "strength",
+      "dominance": "recessive",
+      "effect": {
+        "fire_mult": {
+          "cannon": 1.08
+        }
+      },
+      "description": "Smells the range."
+    },
+    {
+      "id": "quick_study",
+      "name": "Quick Study",
+      "kind": "strength",
+      "dominance": "dominant",
+      "effect": {
+        "training_mult": 1.25
+      },
+      "description": "Learns in a week what takes others a month."
+    },
+    {
+      "id": "steady_under_shot",
+      "name": "Steady Under Shot",
+      "kind": "strength",
+      "dominance": "recessive",
+      "effect": {
+        "morale_loss_from_cannon_mult": 0.92
+      },
+      "description": "Barely flinches at the guns."
+    },
+    {
+      "id": "tactician",
+      "name": "Tactician",
+      "kind": "strength",
+      "dominance": "recessive",
+      "effect": {
+        "ai_insight_bonus": 0.4
+      },
+      "description": "Reads the enemy's plan early."
+    },
+    {
+      "id": "born_leader",
+      "name": "Born Leader",
+      "kind": "strength",
+      "dominance": "dominant",
+      "effect": {
+        "start_morale_add": 2
+      },
+      "description": "Men want to follow."
+    }
+  ],
+  "weaknesses": [
+    {
+      "id": "hothead",
+      "name": "Hothead",
+      "kind": "weakness",
+      "dominance": "dominant",
+      "effect": {
+        "ai_bias": {
+          "tight_wedge": 0.1,
+          "defensive_screen": -0.1
+        },
+        "damage_taken_mult": 1.02
+      },
+      "description": "Charges first, thinks later."
+    },
+    {
+      "id": "gun_shy",
+      "name": "Gun-Shy",
+      "kind": "weakness",
+      "dominance": "recessive",
+      "effect": {
+        "fire_mult": {
+          "infantry": 0.93
+        }
+      },
+      "description": "Flinches at the volley."
+    },
+    {
+      "id": "poor_rider",
+      "name": "Poor Rider",
+      "kind": "weakness",
+      "dominance": "dominant",
+      "effect": {
+        "melee_mult": {
+          "cavalry": 0.93
+        }
+      },
+      "description": "Never trusted horses."
+    },
+    {
+      "id": "lost_in_the_woods",
+      "name": "Lost in the Woods",
+      "kind": "weakness",
+      "dominance": "recessive",
+      "effect": {
+        "terrain_penalty_scale": {
+          "forest": 1.5
+        }
+      },
+      "description": "Every tree looks the same."
+    },
+    {
+      "id": "hesitant",
+      "name": "Hesitant",
+      "kind": "weakness",
+      "dominance": "dominant",
+      "effect": {
+        "messenger_delay_add": 1,
+        "auto_reserve_delay_add": 2
+      },
+      "description": "Waits for certainty that never comes."
+    },
+    {
+      "id": "brittle",
+      "name": "Brittle",
+      "kind": "weakness",
+      "dominance": "recessive",
+      "effect": {
+        "morale_loss_mult": 1.04
+      },
+      "description": "Cracks under pressure."
+    },
+    {
+      "id": "slow_learner",
+      "name": "Slow Learner",
+      "kind": "weakness",
+      "dominance": "dominant",
+      "effect": {
+        "training_mult": 0.8
+      },
+      "description": "Needs telling twice."
+    },
+    {
+      "id": "fear_of_water",
+      "name": "Fear of Water",
+      "kind": "weakness",
+      "dominance": "recessive",
+      "effect": {
+        "terrain_penalty_scale": {
+          "river_crossing": 1.5
+        }
+      },
+      "description": "Hates a crossing."
+    },
+    {
+      "id": "stubborn",
+      "name": "Stubborn",
+      "kind": "weakness",
+      "dominance": "dominant",
+      "effect": {
+        "ai_insight_bonus": -0.15,
+        "ai_bias": {
+          "wide_line": 0.2
+        }
+      },
+      "description": "Fights the battle he planned, not the one in front of him."
+    },
+    {
+      "id": "glory_seeker",
+      "name": "Glory Seeker",
+      "kind": "weakness",
+      "dominance": "recessive",
+      "effect": {
+        "auto_reserve_tick_override": 4,
+        "rout_threshold_add": 1
+      },
+      "description": "Throws everything in early."
+    },
+    {
+      "id": "vain",
+      "name": "Vain",
+      "kind": "weakness",
+      "dominance": "recessive",
+      "effect": {
+        "wisdom_gain_mult": 0.85
+      },
+      "description": "Believes his own dispatches."
+    },
+    {
+      "id": "cannon_blind",
+      "name": "Cannon-Blind",
+      "kind": "weakness",
+      "dominance": "dominant",
+      "effect": {
+        "fire_mult": {
+          "cannon": 0.94
+        }
+      },
+      "description": "No feel for the guns."
+    }
+  ],
+  "hidden": [
+    {
+      "id": "none",
+      "name": "(no hidden trait)",
+      "kind": "hidden",
+      "dominance": "dominant",
+      "effect": {},
+      "description": "Nothing unusual. Never revealed."
+    },
+    {
+      "id": "lions_heart",
+      "name": "Lion's Heart",
+      "kind": "hidden_good",
+      "dominance": "recessive",
+      "effect": {
+        "once_morale_add": 3
+      },
+      "description": "Roars back when all seems lost.",
+      "trigger": {
+        "type": "morale_below",
+        "value": 22
+      }
+    },
+    {
+      "id": "cool_under_fire",
+      "name": "Cool Under Fire",
+      "kind": "hidden_good",
+      "dominance": "dominant",
+      "effect": {
+        "rout_threshold_add": -1
+      },
+      "description": "Keeps his head when the line starts to waver.",
+      "trigger": {
+        "type": "morale_below",
+        "value": 25
+      }
+    },
+    {
+      "id": "second_wind",
+      "name": "Second Wind",
+      "kind": "hidden_good",
+      "dominance": "recessive",
+      "effect": {
+        "restore_lost_morale_frac": 0.07
+      },
+      "description": "Finds a second wind late in the day.",
+      "trigger": {
+        "type": "tick_reached",
+        "value": 10
+      }
+    },
+    {
+      "id": "panic_prone",
+      "name": "Panic-Prone",
+      "kind": "hidden_bad",
+      "dominance": "recessive",
+      "effect": {
+        "rout_threshold_add": 1.5
+      },
+      "description": "Panic spreads from the command tent.",
+      "trigger": {
+        "type": "morale_below",
+        "value": 25
+      }
+    },
+    {
+      "id": "rash",
+      "name": "Rash",
+      "kind": "hidden_bad",
+      "dominance": "dominant",
+      "effect": {
+        "advance_add": 0.5,
+        "damage_taken_mult": 1.15,
+        "duration_ticks": 3
+      },
+      "description": "Charges in hot-headed once blood is drawn.",
+      "trigger": {
+        "type": "first_casualties",
+        "value": 10
+      }
+    },
+    {
+      "id": "lucky",
+      "name": "Lucky",
+      "kind": "hidden_good",
+      "dominance": "recessive",
+      "effect": {
+        "casualties_taken_mult": 0.9,
+        "duration_ticks": 2
+      },
+      "description": "Shot passes him by.",
+      "trigger": {
+        "type": "first_casualties",
+        "value": 10
+      }
+    },
+    {
+      "id": "shaken_by_guns",
+      "name": "Shaken by Guns",
+      "kind": "hidden_bad",
+      "dominance": "recessive",
+      "effect": {
+        "morale_loss_from_cannon_mult": 1.08
+      },
+      "description": "An old wound from the guns.",
+      "trigger": {
+        "type": "cannon_casualties",
+        "value": 4
+      }
+    }
+  ]
+}

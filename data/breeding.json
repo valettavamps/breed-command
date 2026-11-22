@@ -1,0 +1,89 @@
+{
+  "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
+  "version": "1.4",
+  "status": "D5 DECIDED 2026-11-22 (captain): attribute wobble sd 4.0 (clamp +/-10)",
+  "attributes": {
+    "blend": "midparent",
+    "regression_target": 50,
+    "regression_strength": 0.0,
+    "noise": {
+      "distribution": "normal",
+      "sd": 4.0,
+      "clamp": 10
+    },
+    "apply_soft_cap": true,
+    "soft_cap_rule": "if raw > 80: base = max(80, midparent); if raw > base: raw = base + (raw - base) * 0.4"
+  },
+  "hidden_attributes": {
+    "blend": "midparent",
+    "regression_target": 50,
+    "regression_strength": 0.15,
+    "noise": {
+      "distribution": "normal",
+      "sd": 7,
+      "clamp": 15
+    }
+  },
+  "skills": "not inherited; offspring starts with skills.starting_value",
+  "wisdom": "offspring starts at intelligence*0.5",
+  "inbreeding": {
+    "parent_child_or_siblings": {
+      "attribute_add": -3,
+      "noise_sd_mult": 1.5
+    },
+    "half_siblings": {
+      "attribute_add": -2,
+      "noise_sd_mult": 1.25
+    },
+    "cousins": {
+      "attribute_add": -1,
+      "noise_sd_mult": 1.0
+    }
+  },
+  "bloodline": {
+    "inherits": "player picks either parent's house name",
+    "prestige": "mean officer_rating of the officer and recorded ancestors up to 3 generations back (display only)",
+    "pedigree_depth_shown": 3
+  },
+  "limits": {
+    "breeds_per_day_account": 1,
+    "parent_cooldown_days": 3,
+    "min_battles_to_breed": 3,
+    "same_for_all_players": true
+  },
+  "preview": {
+    "show_percentiles": [
+      10,
+      50,
+      90
+    ],
+    "show_trait_odds": "only for alleles already revealed in the pedigree"
+  },
+  "offspring_rank": "lieutenant",
+  "starter_roster": {
+    "status": "D14 DECIDED 2026-11-22 (captain): new accounts start with 3 officers.",
+    "count": 3,
+    "rank": "lieutenant",
+    "attributes": "attributes.innate.new_officer (Normal 40, sd 9, clamped 20-60), each attribute independent",
+    "hidden": "attributes.hidden.new_officer",
+    "traits": "founder rule (traits.json): 2 alleles per slot drawn from the library; the expressed strength and weakness are always 1 visible each",
+    "variety_rule": "the 3 starters have pairwise different expressed strengths and pairwise different expressed weaknesses; re-draw a later starter's genotype (same seeded RNG) until this holds, max 50 tries, then keep the last draw",
+    "pairing_rule": "V1 has no sex mechanic: any 2 different officers can breed. Starters have no parents and are unrelated (no inbreeding penalty), so all 3 pairs are legal from day 1; each parent still needs 3 ranked battles first (limits.min_battles_to_breed), so the earliest first breed is day 2",
+    "start_state": {
+      "battles": 0,
+      "wisdom": "INT x 0.5",
+      "skills": "skills starting values",
+      "generation": 0,
+      "sire": null,
+      "dam": null,
+      "house": "the player's house"
+    },
+    "seed": "hash32('loc-starter-v1', account_id)"
+  },
+  "roster": {
+    "status": "D10 DECIDED 2026-11-22 (captain): cap 20, manual release, pedigree ghosts.",
+    "cap": 20,
+    "release": "manual only (no ageing/retirement in V1)",
+    "pedigree_ghosts": "A released officer is removed from the barracks but stays as a read-only ghost entry (id, name, house, parents, attributes, expressed traits, revealed alleles) so pedigrees, inbreeding checks, carrier visibility and bloodline prestige still work. Ghosts cannot fight, breed or train and do not use roster slots."
+  }
+}

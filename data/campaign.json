@@ -1,0 +1,236 @@
+{
+  "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
+  "version": "1.4",
+  "status": "v1.1 addition 2026-11-22 (captain): the 3 daily ranked battles are offered as assignments from the war general on a campaign map. Solo vs NPC in V1. Changes no balance value.",
+  "sides": {
+    "blues": {
+      "name": "the Blues",
+      "player_side_in_v1": true
+    },
+    "reds": {
+      "name": "the Reds",
+      "player_side_in_v1": false
+    }
+  },
+  "war_general": {
+    "name": "General Hawthorne",
+    "side": "blues"
+  },
+  "locations": [
+    {
+      "id": "ashford_crossroads",
+      "name": "Ashford Crossroads",
+      "terrain": "open_field",
+      "fort": false,
+      "controller": "blues",
+      "adjacent": [
+        "fort_corwen",
+        "harrow_wood",
+        "kestrel_ridge"
+      ]
+    },
+    {
+      "id": "fort_corwen",
+      "name": "Fort Corwen",
+      "terrain": "open_field",
+      "fort": true,
+      "controller": "blues",
+      "adjacent": [
+        "ashford_crossroads",
+        "blackwater_ford",
+        "harrow_wood"
+      ]
+    },
+    {
+      "id": "harrow_wood",
+      "name": "Harrow Wood",
+      "terrain": "forest",
+      "fort": false,
+      "controller": "blues",
+      "adjacent": [
+        "ashford_crossroads",
+        "fort_corwen",
+        "millbrook_bridge",
+        "kestrel_ridge"
+      ]
+    },
+    {
+      "id": "kestrel_ridge",
+      "name": "Kestrel Ridge",
+      "terrain": "hill",
+      "fort": false,
+      "controller": "blues",
+      "adjacent": [
+        "ashford_crossroads",
+        "harrow_wood",
+        "blackwater_ford"
+      ]
+    },
+    {
+      "id": "blackwater_ford",
+      "name": "Blackwater Ford",
+      "terrain": "river_crossing",
+      "fort": false,
+      "controller": "blues",
+      "adjacent": [
+        "fort_corwen",
+        "kestrel_ridge",
+        "saint_aubin_redoubt",
+        "greyfriars_heights"
+      ]
+    },
+    {
+      "id": "millbrook_bridge",
+      "name": "Millbrook Bridge",
+      "terrain": "river_crossing",
+      "fort": false,
+      "controller": "reds",
+      "adjacent": [
+        "harrow_wood",
+        "the_thornwood",
+        "saint_aubin_redoubt"
+      ]
+    },
+    {
+      "id": "saint_aubin_redoubt",
+      "name": "Saint-Aubin Redoubt",
+      "terrain": "open_field",
+      "fort": true,
+      "controller": "reds",
+      "adjacent": [
+        "blackwater_ford",
+        "millbrook_bridge",
+        "greyfriars_heights",
+        "the_thornwood"
+      ]
+    },
+    {
+      "id": "greyfriars_heights",
+      "name": "Greyfriars Heights",
+      "terrain": "hill",
+      "fort": false,
+      "controller": "reds",
+      "adjacent": [
+        "blackwater_ford",
+        "saint_aubin_redoubt",
+        "castle_varne"
+      ]
+    },
+    {
+      "id": "the_thornwood",
+      "name": "The Thornwood",
+      "terrain": "forest",
+      "fort": false,
+      "controller": "reds",
+      "adjacent": [
+        "millbrook_bridge",
+        "saint_aubin_redoubt",
+        "castle_varne"
+      ]
+    },
+    {
+      "id": "castle_varne",
+      "name": "Castle Varne",
+      "terrain": "open_field",
+      "fort": true,
+      "controller": "reds",
+      "adjacent": [
+        "greyfriars_heights",
+        "the_thornwood"
+      ]
+    }
+  ],
+  "board": {
+    "options_per_day": 6,
+    "picks_per_day": "economy.daily_limits.ranked_battles_per_day (3)",
+    "seed": {
+      "formula": "hash32('loc-board-v1', scope_id, day_index)",
+      "scope_id_v1": "account_id",
+      "scope_id_shared_war": "war_id",
+      "day_index": "whole days since 2026-01-01 00:00 UTC",
+      "rng": "PCG32, the same generator as the battle RNG"
+    },
+    "generated_at": "built once per day, the first time the player opens the board after that day's 00:00 UTC reset, from the roster as it stands at that moment (the snapshot); then frozen for the day",
+    "frozen": {
+      "rule": "once built, the board never regenerates that day; later roster changes (breeding, release, promotion) do not change it",
+      "same_inputs_same_board": "same scope_id + day_index + snapshot ranks always gives the same board",
+      "after_snapshot": "options stay on the board if an officer on the snapshot is released or promoted; eligibility is checked at pick time against the picking officer's current rank (rank_eligibility)",
+      "manipulation": "changing the roster before opening the board only changes which ranks are covered; board outcomes give no extra rewards, so nothing is gained"
+    },
+    "rank_eligibility": "an officer may take an option of their own rank or one rank below (officer rank order - option rank order in {0, 1}); both armies use the option rank's point budget",
+    "scenario_count_weights": {
+      "0": 0.4,
+      "1": 0.45,
+      "2": 0.15
+    },
+    "scenario_type_weights": {
+      "hold_the_fort": 0.65,
+      "last_stand": 0.35
+    },
+    "scenario_rules": "only if the player owns a Lieutenant or Captain; only at fort locations; at most one of each scenario per day; eligible officers = scenarios.<id>.open_to_ranks",
+    "variety": {
+      "min_distinct_terrains": 3,
+      "distinct_locations": true,
+      "cover_every_owned_rank": true,
+      "max_scenarios": 2
+    },
+    "steps": [
+      "1. rng = PCG32(seed)",
+      "2. required ranks: take the lowest owned rank r, add a standard option at r (it covers officers of rank r and r+1), remove r and r+1, repeat until every owned rank is covered (at most 3 options)",
+      "3. scenarios: if eligible, draw the count from scenario_count_weights (capped by free slots and fort count); if 2, one of each type, else draw the type by scenario_type_weights",
+      "4. fill the remaining slots with standard options at a rank drawn uniformly from the owned ranks",
+      "5. locations: scenario options draw distinct fort locations; standard options draw distinct unused locations uniformly",
+      "6. variety: while fewer than 3 distinct terrains, move the last not-yet-moved standard option to an unused location of a missing terrain",
+      "7. order: sort by rank order, scenarios last; option_id = '<day_index>-<slot>'",
+      "8. brief: narration.json briefing template, variant = hash(seed, slot) mod count"
+    ]
+  },
+  "option_fields": {
+    "option_id": "string",
+    "location_id": "campaign.locations[].id",
+    "terrain": "the location's terrain (symmetric, D6)",
+    "type": "standard | scenario",
+    "scenario_id": "scenarios.json id or null",
+    "rank": "ranks.json id (scenarios: lieutenant, open to scenarios.<id>.open_to_ranks)",
+    "point_budget": "ranks[rank].point_budget (scenarios: from scenarios.json)",
+    "eligible_ranks": "list of rank ids",
+    "brief": "string",
+    "wisdom_win_mult": "1.0 for standard, scenarios.<id>.rewards.wisdom_win_mult for scenarios",
+    "side": "blues in V1",
+    "status": "open | taken | expired"
+  },
+  "picking": {
+    "uses_ranked_battle": true,
+    "each_option_taken_once": true,
+    "max_assignments_per_officer_per_day": 3,
+    "per_officer_cap_status": "DECIDED 2026-11-22 (captain): one officer may take all 3 daily battles; the account cap stays 3 (economy.daily_limits)",
+    "unused_options": "expire at the next 00:00 UTC reset; nothing banks",
+    "opponent": "existing ranked-opponent generator (ranks.rules.opponent, battle.ai_general) at the option's point budget",
+    "battle_seed": "hash32(board seed, option_id, officer_id)"
+  },
+  "outcome": {
+    "effect": "cosmetic only",
+    "personal_map": "a win flips the location's flag to the player's side in the player's own campaign view; a loss shows the enemy flag; nothing else changes",
+    "extra_rewards": null,
+    "narration": "battle_start and battle_end lines name the location (narration.json location_* templates)"
+  },
+  "shared_war_hooks": {
+    "status": "FUTURE, not used in V1",
+    "fields": [
+      "sides",
+      "locations[].controller",
+      "board.seed.scope_id_shared_war",
+      "option_fields.side"
+    ],
+    "contributions_log": "each finished assignment appends {war_id|null, day_index, option_id, location_id, side, officer_id, rank, result, reason, ticks, final strengths} to the account's contributions log in V1 (read-only); a shared war would aggregate it per location",
+    "npc_fill_in": "fill_npc(side, rank, seed) returns an officer and army from the existing opponent generator; V1 already uses it for every opponent",
+    "not_in_v1": [
+      "shared world state",
+      "front-line movement or control changes from results",
+      "choosing a side",
+      "PvP",
+      "server-side war ticks",
+      "rewards for control"
+    ]
+  }
+}

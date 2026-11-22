@@ -1,0 +1,139 @@
+{
+  "_note": "Single source of truth for Line of Command V1 balance numbers. spec.md quotes these values; if they disagree, this file wins and spec.md is the bug.",
+  "version": "1.4",
+  "variant_pick": "variant index = hash(seed, tick, event_index) mod variant_count",
+  "placeholders": {
+    "formation_name": "formations.<id>.name (display name)",
+    "unit_name": "units.<id>.narration_name",
+    "unit_plural": "units.<id>.narration_plural",
+    "counter_reason": "not a log placeholder; formations.counter_reasons is UI text"
+  },
+  "names": {
+    "side": "{side_name}",
+    "officer": "{rank} {officer_name}"
+  },
+  "templates": {
+    "battle_start": [
+      "{terrain_name}. {a_officer} faces {b_officer}. {a_troops} men against {b_troops}.",
+      "Dawn over the {terrain_name}. {a_officer} and {b_officer} take the field."
+    ],
+    "formation_chosen": [
+      "{officer} forms the {formation_name}.",
+      "{officer} orders the army into the {formation_name}."
+    ],
+    "advance": [
+      "{side_name} advance. The lines are {distance} hundred paces apart.",
+      "Drums beat; {side_name} close to {distance} hundred paces."
+    ],
+    "hold": [
+      "{side_name} hold their ground and wait.",
+      "{officer} halts the line."
+    ],
+    "volley": [
+      "The {unit_plural} of {side_name} fire. {casualties} fall.",
+      "A volley from {side_name}'s {unit_plural} cuts down {casualties}."
+    ],
+    "cannon": [
+      "{side_name}'s guns roar. {casualties} men are struck.",
+      "Round shot from {side_name} tears into the ranks: {casualties} down."
+    ],
+    "canister": [
+      "Canister at close range! {casualties} fall before {side_name}'s guns."
+    ],
+    "charge": [
+      "{side_name}'s cavalry charge home! {casualties} cut down.",
+      "Sabres flash as {side_name}'s horse crash in: {casualties} fall."
+    ],
+    "melee": [
+      "Bayonets cross. {side_name} lose {casualties_taken}, the enemy {casualties}.",
+      "Hand to hand along the line: {casualties} fall to {side_name}."
+    ],
+    "morale_shaken": [
+      "{side_name} waver (morale {morale}).",
+      "Men in {side_name}'s ranks look over their shoulders."
+    ],
+    "messenger_sent": [
+      "A rider leaves the general's tent for {officer}.",
+      "The general sends a messenger to {officer}."
+    ],
+    "messenger_sent_standing_order": [
+      "As ordered before the battle, a rider gallops to {officer}."
+    ],
+    "rally": [
+      "The messenger arrives: {officer} rides the line. +{morale_gain} morale (now {morale}), and the men will hold steadier for 2 turns.",
+      "'Hold, lads!' {side_name} rally: +{morale_gain} morale (now {morale}); losses will shake them less for 2 turns."
+    ],
+    "rally_ui_label": [
+      "Rally: restores 12% of morale lost so far (more with high Inspiration) and cuts morale loss by 10% for 2 turns."
+    ],
+    "reserves_committed": [
+      "Reserves march in on {side_name}'s flank: {reserve_troops} fresh men.",
+      "{officer} commits the reserve: {reserve_troops} men."
+    ],
+    "auto_reserves": [
+      "{officer} sends in the reserve on his own judgement."
+    ],
+    "messenger_wasted": [
+      "The messenger arrives, but there is nothing left to send."
+    ],
+    "messenger_lost": [
+      "The rider never reaches {officer}: the battle is already over."
+    ],
+    "standing_order_cancelled": [
+      "The general's standing order is cancelled; a rider has already gone."
+    ],
+    "live_click_ignored": [
+      "A second rider is held back; the messenger has already gone."
+    ],
+    "trait_revealed": [
+      "Something new in {officer}: {trait_name}!",
+      "{officer} reveals {trait_name}."
+    ],
+    "hidden_attribute_revealed": [
+      "{officer}'s {attribute_name} shows: {band}."
+    ],
+    "rout": [
+      "{side_name} break and run!",
+      "The line dissolves: {side_name} rout."
+    ],
+    "pursuit": [
+      "{side_name}'s cavalry ride down the fugitives: {casualties} more fall."
+    ],
+    "battle_end_win": [
+      "Victory for {winner_name} after {ticks} turns. {winner_troops} remain against {loser_troops}."
+    ],
+    "briefing_standard": [
+      "{general}: The Reds are pressing at {location}. Hold them there, {rank}.",
+      "{general}: I need {location} by nightfall. Take it, {rank}.",
+      "{general}: Scouts report a column near {location}. Meet it and break it."
+    ],
+    "briefing_scenario": [
+      "{general}: {location} must not fall. Their whole column outnumbers you three to one; only its vanguard can reach the walls today. Hold for twelve turns.",
+      "{general}: The garrison at {location} is all we have. Forts like it have been stormed at six to one. Make them pay for every yard."
+    ],
+    "location_battle_start": [
+      "Before {location}, {a_officer} faces {b_officer}.",
+      "The guns open at {location}."
+    ],
+    "location_won": [
+      "{location} is ours. The Blues' colours go up.",
+      "The Reds fall back from {location}."
+    ],
+    "location_lost": [
+      "{location} is lost. The Reds' colours fly there tonight.",
+      "We are driven from {location}."
+    ],
+    "scenario_held": [
+      "The walls held. After {ticks} turns {winner_name} still stands, and the column draws off.",
+      "Turn {ticks}: {winner_name} has held the fort. The attack is spent.",
+      "The vanguard is broken before the walls after {ticks} turns; the rest of the column will not try again today."
+    ],
+    "scenario_losses_reached": [
+      "{loser_name} has lost too many men before the walls ({loss_pct}%). The assault is called off.",
+      "The ditch is full of {loser_name}'s dead ({loss_pct}% lost). They fall back."
+    ],
+    "battle_end_draw": [
+      "Dusk ends the fighting. Neither side can claim the field."
+    ]
+  }
+}
