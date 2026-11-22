@@ -387,10 +387,10 @@ func _army(officer: Dictionary, units: Dictionary, stance: String, side_name: St
 	return Records.army(body)
 
 
-func _fight(res, check_id: String, trial: int, oa: Dictionary, ob: Dictionary, ua: Dictionary, ub: Dictionary, sa: String, sb: String, terr: String, fa = null, fb = null, scenario = null, want_log: bool = false, reserve_a = null):
+func _fight(res, check_id: String, trial: int, oa: Dictionary, ob: Dictionary, ua: Dictionary, ub: Dictionary, sa: String, sb: String, terr: String, fa = null, fb = null, scenario = null, want_log: bool = false, reserve_a = null, reserve_b = null):
 	var seed := HashUtil.hash32(master, check_id, trial)
 	var army_a := _army(oa, ua, sa, "Blues", fa, reserve_a)
-	var army_b := _army(ob, ub, sb, "Reds", fb)
+	var army_b := _army(ob, ub, sb, "Reds", fb, reserve_b)
 	return res.resolve_battle(army_a, army_b, terr, seed, scenario, want_log)
 
 
@@ -999,14 +999,18 @@ func _trait_rate(tag: String, id: String, slot: String, n: int) -> float:
 		var base := _officer(rng, budget)
 		var oa := _with_trait(base, slot, id)
 		var units := _comp(rng, budget)
-		var reserve = null
+		var other := _comp(rng, budget)
+		var reserve_a = null
+		var reserve_b = null
 		var shown := str(data.trait_by_id[id].get("name", ""))
 		var setup := str(plan["rows"]["B14"]["setup"])
 		var reserve_at := setup.find("reserve")
 		if reserve_at >= 0 and setup.substr(0, reserve_at).find(shown) >= 0:
-			reserve = {"infantry": 0, "cavalry": 0, "cannon": 0}
-			reserve["infantry"] = int(resolver.round_half(float(units.get("infantry", 0)) * float(plan["reserve_frac"])))
-		var out: Dictionary = _fight(resolver, tag, i, oa, base.duplicate(true), units, _comp(rng, budget), _pick(rng, data.stance_ids), _pick(rng, data.stance_ids), _pick(rng, data.terrain_ids), null, null, null, false, reserve)
+			reserve_a = {"infantry": 0, "cavalry": 0, "cannon": 0}
+			reserve_b = {"infantry": 0, "cavalry": 0, "cannon": 0}
+			reserve_a["infantry"] = int(resolver.round_half(float(units.get("infantry", 0)) * float(plan["reserve_frac"])))
+			reserve_b["infantry"] = int(resolver.round_half(float(other.get("infantry", 0)) * float(plan["reserve_frac"])))
+		var out: Dictionary = _fight(resolver, tag, i, oa, base.duplicate(true), units, other, _pick(rng, data.stance_ids), _pick(rng, data.stance_ids), _pick(rng, data.terrain_ids), null, null, null, false, reserve_a, reserve_b)
 		total += _score(out, "A")
 	return total / float(_span(n))
 
